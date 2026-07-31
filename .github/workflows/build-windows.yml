@@ -1,0 +1,87 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - unlock-local-limits
+      - main
+    paths:
+      - "apps/desktop/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/build-windows.yml"
+
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows NSIS
+    runs-on: windows-2022
+    permissions:
+      contents: read
+    env:
+      RUST_TARGET_TRIPLE: x86_64-pc-windows-msvc
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: ./.github/actions/setup-rust-cache
+        with:
+          target: x86_64-pc-windows-msvc
+
+      - uses: ./.github/actions/setup-js
+
+      - name: Create .env file
+        shell: bash
+        run: |
+          {
+            echo "VITE_ENVIRONMENT=production"
+            echo "NEXT_PUBLIC_WEB_URL=https://cap.so"
+            echo "NEXTAUTH_URL=https://cap.so"
+            echo "VITE_SERVER_URL=https://cap.so"
+            echo "RUST_TARGET_TRIPLE=x86_64-pc-windows-msvc"
+          } >> .env
+          cp .env apps/desktop/.env
+
+      - name: Run cap-setup
+        shell: bash
+        run: pnpm -w cap-setup
+        env:
+          RUST_TARGET_TRIPLE: x86_64-pc-windows-msvc
+
+      - name: Increase pagefile size
+        uses: al-cheb/configure-pagefile-action@a3b6ebd6b634da88790d9c58d4b37a7f4a7b8708 # v1.4
+        with:
+          minimum-size: 16GB
+          maximum-size: 24GB
+          disk-root: "D:"
+
+      - name: Build desktop binaries
+        shell: bash
+        run: ./scripts/build-desktop-binaries.sh x86_64-pc-windows-msvc
+
+      - name: Build Windows installer
+        working-directory: apps/desktop
+        shell: bash
+        run: pnpm build:tauri --target x86_64-pc-windows-msvc --bundles nsis
+        env:
+          CI: false
+          RUST_TARGET_TRIPLE: x86_64-pc-windows-msvc
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cap-Windows-NSIS
+          path: |
+            target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 14
