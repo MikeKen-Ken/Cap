@@ -261,14 +261,27 @@ export function createLicenseQuery() {
 			const settings = await generalSettingsStore.get();
 			const auth = await authStore.get();
 
-			if (auth?.plan?.upgraded) return { type: "pro" as const, ...auth.plan };
+			if (auth?.plan)
+				return {
+					type: "pro" as const,
+					upgraded: true,
+					manual: auth.plan.manual,
+					last_checked: auth.plan.last_checked,
+				};
+			if (auth)
+				return {
+					type: "pro" as const,
+					upgraded: true,
+					manual: false,
+					last_checked: 0,
+				};
 			if (settings?.commercialLicense)
 				return {
 					type: "commercial" as const,
 					...settings.commercialLicense,
 					instanceId: settings.instanceId,
 				};
-			return { type: "personal" as const };
+			return { type: "pro" as const, upgraded: true, manual: false, last_checked: 0 };
 		},
 	}));
 

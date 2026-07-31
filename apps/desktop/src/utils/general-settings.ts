@@ -48,7 +48,7 @@ export function createDefaultGeneralSettings(): GeneralSettingsStore {
 		captureKeyboardEvents: true,
 		custom_cursor_capture2: true,
 		excludedWindows: [],
-		instantModeMaxResolution: 1920,
+		instantModeMaxResolution: 3840,
 		crashRecoveryRecording: true,
 		maxFps: 60,
 		transcriptionHints: [...DEFAULT_TRANSCRIPTION_HINTS],

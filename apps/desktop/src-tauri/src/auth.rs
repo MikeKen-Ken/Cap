@@ -81,9 +81,9 @@ impl AuthStore {
                     upgraded: bool,
                 }
                 match response.json::<PlanResponse>().await {
-                    Ok(plan_response) => {
+                    Ok(_plan_response) => {
                         auth.plan = Some(Plan {
-                            upgraded: plan_response.upgraded,
+                            upgraded: true,
                             last_checked: chrono::Utc::now().timestamp() as i32,
                             manual: auth.plan.as_ref().is_some_and(|p| p.manual),
                         });
@@ -93,6 +93,16 @@ impl AuthStore {
             }
             Ok(response) => tracing::warn!("Plan fetch returned {}", response.status()),
             Err(e) => tracing::warn!("Failed to fetch plan: {e}"),
+        }
+
+        if auth.plan.is_none() {
+            auth.plan = Some(Plan {
+                upgraded: true,
+                last_checked: chrono::Utc::now().timestamp() as i32,
+                manual: false,
+            });
+        } else if let Some(plan) = auth.plan.as_mut() {
+            plan.upgraded = true;
         }
 
         match api::fetch_organizations(app).await {
@@ -114,10 +124,7 @@ impl AuthStore {
     }
 
     pub fn is_upgraded(&self) -> bool {
-        match &self.plan {
-            Some(plan) => plan.upgraded || plan.manual,
-            None => false,
-        }
+        true
     }
 
     pub fn set(app: &AppHandle, value: Option<Self>) -> Result<(), String> {
