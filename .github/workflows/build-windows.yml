@@ -72,7 +72,7 @@ jobs:
       - name: Build Windows installer
         working-directory: apps/desktop
         shell: bash
-        run: pnpm build:tauri --target x86_64-pc-windows-msvc --bundles nsis
+        run: pnpm build:tauri --target x86_64-pc-windows-msvc --bundles nsis --config src-tauri/tauri.unsigned.conf.json
         env:
           CI: false
           RUST_TARGET_TRIPLE: x86_64-pc-windows-msvc
