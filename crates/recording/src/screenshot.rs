@@ -981,33 +981,42 @@ pub async fn capture_screenshot(target: ScreenCaptureTarget) -> anyhow::Result<D
 
     #[cfg(target_os = "windows")]
     let mut capturer = {
-        let item = match target.clone() {
-            ScreenCaptureTarget::Display { id } => {
-                let display = scap_targets::Display::from_id(&id)
-                    .ok_or_else(|| anyhow!("Display not found"))?;
-                display
-                    .raw_handle()
-                    .try_as_capture_item()
-                    .map_err(|e| anyhow!("Failed to get capture item: {e:?}"))?
-            }
-            ScreenCaptureTarget::Window { id } => {
-                let window = scap_targets::Window::from_id(&id)
-                    .ok_or_else(|| anyhow!("Window not found"))?;
-                window
-                    .raw_handle()
-                    .try_as_capture_item()
-                    .map_err(|e| anyhow!("Failed to get capture item: {e:?}"))?
-            }
-            ScreenCaptureTarget::Area { screen, .. } => {
-                let display = scap_targets::Display::from_id(&screen)
-                    .ok_or_else(|| anyhow!("Display not found"))?;
-                display
-                    .raw_handle()
-                    .try_as_capture_item()
-                    .map_err(|e| anyhow!("Failed to get capture item: {e:?}"))?
-            }
-            ScreenCaptureTarget::CameraOnly => {
-                return Err(anyhow!("Camera-only not supported for screenshots"));
+        let item = match (|| -> anyhow::Result<_> {
+            Ok(match target.clone() {
+                ScreenCaptureTarget::Display { id } => {
+                    let display = scap_targets::Display::from_id(&id)
+                        .ok_or_else(|| anyhow!("Display not found"))?;
+                    display
+                        .raw_handle()
+                        .try_as_capture_item()
+                        .map_err(|e| anyhow!("Failed to get capture item: {e:?}"))?
+                }
+                ScreenCaptureTarget::Window { id } => {
+                    let window = scap_targets::Window::from_id(&id)
+                        .ok_or_else(|| anyhow!("Window not found"))?;
+                    window
+                        .raw_handle()
+                        .try_as_capture_item()
+                        .map_err(|e| anyhow!("Failed to get capture item: {e:?}"))?
+                }
+                ScreenCaptureTarget::Area { screen, .. } => {
+                    let display = scap_targets::Display::from_id(&screen)
+                        .ok_or_else(|| anyhow!("Display not found"))?;
+                    display
+                        .raw_handle()
+                        .try_as_capture_item()
+                        .map_err(|e| anyhow!("Failed to get capture item: {e:?}"))?
+                }
+                ScreenCaptureTarget::CameraOnly => {
+                    return Err(anyhow!("Camera-only not supported for screenshots"));
+                }
+            })
+        })() {
+            Ok(item) => item,
+            Err(e) => {
+                let fallback_image = gdi_or_error(&target, e)?;
+                return crop_area_if_needed(fallback_image, &target, false)
+                    .map(|img| finalize_screenshot(img, &target));
             }
         };
 

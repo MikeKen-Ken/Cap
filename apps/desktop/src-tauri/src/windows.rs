@@ -1030,7 +1030,7 @@ impl CapWindowId {
             Self::CaptureArea => "Cap Capture Area".to_string(),
             Self::RecordingControls => "Cap Recording Controls".to_string(),
             Self::Editor { .. } => "Cap Editor".to_string(),
-            Self::ScreenshotEditor { .. } => "Cap Screenshot Editor".to_string(),
+            Self::ScreenshotEditor { .. } => "Cap 截图编辑器".to_string(),
             Self::ModeSelect => "Cap Mode Selection".to_string(),
             Self::Onboarding => "Welcome to Cap".to_string(),
             Self::Camera => "Cap Camera".to_string(),

@@ -696,25 +696,12 @@ function Inner() {
 												}}
 												onRecordingStart={() => {
 													setOriginalCameraBounds(null);
-													if (options.mode === "screenshot") {
-														// The window variant has always dismissed the picker
-														// for screenshots too; keep that, tagged as such.
-														if (options.targetModeSource === "editor") {
-															setOptions({
-																targetMode: null,
-																targetModeSource: "editorRecording",
-																targetModeDismissal: "screenshot",
-															});
-														} else {
-															setOptions({
-																targetMode: null,
-																targetModeDismissal: "screenshot",
-															});
-														}
-														commands.closeTargetSelectOverlays();
-													} else {
-														dismissPickerForRecordingStart();
-													}
+													// Screenshot mode must keep this webview alive until
+													// takeScreenshot returns — closing here destroys the
+													// invoke and looks like a no-op (display mode already
+													// no-ops via dismissPickerForRecordingStart).
+													if (options.mode === "screenshot") return;
+													dismissPickerForRecordingStart();
 												}}
 												onClose={() => {
 													setSelectedWindow(null);
@@ -1304,6 +1291,13 @@ function Inner() {
 									const message = e instanceof Error ? e.message : String(e);
 									toast.error(`截图失败：${message}`);
 									console.error("Failed to take screenshot", e);
+									const allWindows = await WebviewWindow.getAll();
+									for (const win of allWindows) {
+										if (win.label.startsWith("target-select-overlay-")) {
+											await win.show();
+											await win.setIgnoreCursorEvents(false);
+										}
+									}
 								}
 							}
 						}
@@ -2013,6 +2007,13 @@ function RecordingControls(props: {
 				const message = e instanceof Error ? e.message : String(e);
 				toast.error(`截图失败：${message}`);
 				console.error("Failed to take screenshot", e);
+				const allWindows = await WebviewWindow.getAll();
+				for (const win of allWindows) {
+					if (win.label.startsWith("target-select-overlay-")) {
+						await win.show();
+						await win.setIgnoreCursorEvents(false);
+					}
+				}
 			}
 			return;
 		}

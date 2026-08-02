@@ -47,19 +47,19 @@ impl NotificationType {
                 true,
             ),
             NotificationType::ScreenshotSaved => {
-                ("Screenshot Saved", "Screenshot saved successfully", false)
+                ("截图已保存", "截图保存成功", false)
             }
             NotificationType::ScreenshotCopiedToClipboard => {
-                ("Screenshot Copied", "Screenshot copied to clipboard", false)
+                ("截图已复制", "截图已复制到剪贴板", false)
             }
             NotificationType::ScreenshotSaveFailed => (
-                "Save Failed",
-                "Unable to save screenshot. Please try again",
+                "保存失败",
+                "无法保存截图，请重试",
                 true,
             ),
             NotificationType::ScreenshotCopyFailed => (
-                "Copy Failed",
-                "Unable to copy screenshot to clipboard. Please try again",
+                "复制失败",
+                "无法将截图复制到剪贴板，请重试",
                 true,
             ),
         }
