@@ -210,12 +210,10 @@ function InProgressRecordingInner() {
 				setPauseResumes([]);
 				setStopRequested(false);
 				setMicMuted(false);
-				aborted = false;
 				// This window is reused across recordings, so `start`/`time` still
-				// hold the previous session's values here. Effects (the free-plan
-				// length limit) run synchronously on the state flip below, so the
-				// timestamps must be reset first or the new recording gets measured
-				// against the old session and stopped immediately.
+				// hold the previous session's values here. Effects run synchronously
+				// on the state flip below, so the timestamps must be reset first or
+				// the new recording gets measured against the old session.
 				setStart(Date.now());
 				setTime(Date.now());
 				setState({ variant: "recording" });
@@ -306,7 +304,6 @@ function InProgressRecordingInner() {
 			setPauseResumes([]);
 			setStopRequested(false);
 			setMicMuted(false);
-			aborted = false;
 			if (recording.status === "recording") {
 				setStart(Date.now());
 				setTime(Date.now());
@@ -326,7 +323,6 @@ function InProgressRecordingInner() {
 			setDegradedReason(null);
 			setPauseResumes([]);
 			setMicMuted(false);
-			aborted = false;
 			setStart(Date.now());
 			setTime(Date.now());
 			setState({ variant: "recording" });
