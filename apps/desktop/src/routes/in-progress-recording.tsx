@@ -30,6 +30,7 @@ import {
 	createOptionsQuery,
 } from "~/utils/queries";
 import { handleRecordingResult } from "~/utils/recording";
+import { captureStartedWithDevice } from "~/utils/recording-options-sync";
 import type {
 	CameraInfo,
 	CurrentRecording,
@@ -90,8 +91,21 @@ function InProgressRecordingInner() {
 	};
 	const currentRecording = createCurrentRecordingQuery();
 	const optionsQuery = createOptionsQuery();
-	const startedWithMicrophone = optionsQuery.rawOptions.micName != null;
-	const startedWithCameraInput = optionsQuery.rawOptions.cameraID != null;
+	// 录制条 webview 会跨会话复用：在每次真正开录前刷新共享设置再快照，
+	// 避免首次挂载时 micName 仍为 null/旧值导致整场录制被锁死。
+	const [startedWithMicrophone, setStartedWithMicrophone] = createSignal(false);
+	const [startedWithCameraInput, setStartedWithCameraInput] =
+		createSignal(false);
+
+	const syncStartedWithDevices = async () => {
+		await optionsQuery.refreshFromStore();
+		setStartedWithMicrophone(
+			captureStartedWithDevice(optionsQuery.rawOptions.micName),
+		);
+		setStartedWithCameraInput(
+			captureStartedWithDevice(optionsQuery.rawOptions.cameraID),
+		);
+	};
 
 	const audioLevel = createAudioInputLevel();
 	const [disconnectedInputs, setDisconnectedInputs] =
@@ -135,13 +149,9 @@ function InProgressRecordingInner() {
 	const issueMessages = createMemo(() => {
 		const issues: string[] = [];
 		if (disconnectedInputs.microphone)
-			issues.push(
-				"麦克风已断开。重新连接前将使用静音。",
-			);
+			issues.push("麦克风已断开。重新连接前将使用静音。");
 		if (disconnectedInputs.camera)
-			issues.push(
-				"摄像头已断开。录制将继续，但不包含摄像头画面。",
-			);
+			issues.push("摄像头已断开。录制将继续，但不包含摄像头画面。");
 		const failure = recordingFailure();
 		if (failure) issues.push(failure);
 		return issues;
@@ -195,6 +205,7 @@ function InProgressRecordingInner() {
 				setPauseResumes([]);
 				setStopRequested(false);
 				setMicMuted(false);
+				void syncStartedWithDevices();
 				setState({
 					variant: "countdown",
 					from: payload.value,
@@ -210,6 +221,7 @@ function InProgressRecordingInner() {
 				setPauseResumes([]);
 				setStopRequested(false);
 				setMicMuted(false);
+				void syncStartedWithDevices();
 				// This window is reused across recordings, so `start`/`time` still
 				// hold the previous session's values here. Effects run synchronously
 				// on the state flip below, so the timestamps must be reset first or
@@ -304,6 +316,7 @@ function InProgressRecordingInner() {
 			setPauseResumes([]);
 			setStopRequested(false);
 			setMicMuted(false);
+			void syncStartedWithDevices();
 			if (recording.status === "recording") {
 				setStart(Date.now());
 				setTime(Date.now());
@@ -323,6 +336,7 @@ function InProgressRecordingInner() {
 			setDegradedReason(null);
 			setPauseResumes([]);
 			setMicMuted(false);
+			void syncStartedWithDevices();
 			setStart(Date.now());
 			setTime(Date.now());
 			setState({ variant: "recording" });
@@ -518,10 +532,11 @@ function InProgressRecordingInner() {
 
 	const deleteRecording = createMutation(() => ({
 		mutationFn: async () => {
-			const shouldDelete = await dialog.confirm(
-				"确定要删除此次录制吗？",
-				{ title: "确认删除", okLabel: "删除", cancelLabel: "取消" },
-			);
+			const shouldDelete = await dialog.confirm("确定要删除此次录制吗？", {
+				title: "确认删除",
+				okLabel: "删除",
+				cancelLabel: "取消",
+			});
 
 			if (!shouldDelete) return;
 
@@ -556,7 +571,7 @@ function InProgressRecordingInner() {
 
 	const updateMicInput = createMutation(() => ({
 		mutationFn: async (name: string | null) => {
-			if (!startedWithMicrophone && name !== null) return;
+			if (!startedWithMicrophone() && name !== null) return;
 			const previous = optionsQuery.rawOptions.micName ?? null;
 			if (previous === name) return;
 			await pauseRecordingForDeviceChange();
@@ -572,7 +587,7 @@ function InProgressRecordingInner() {
 
 	const updateCameraInput = createMutation(() => ({
 		mutationFn: async (camera: CameraInfo | null) => {
-			if (!startedWithCameraInput && camera != null) return;
+			if (!startedWithCameraInput() && camera != null) return;
 			const selected = optionsQuery.rawOptions.cameraID ?? null;
 			if (!camera && selected === null) return;
 			if (camera && cameraMatchesSelection(camera, selected)) return;
@@ -617,9 +632,9 @@ function InProgressRecordingInner() {
 				await CheckMenuItem.new({
 					text: "显示摄像头预览",
 					checked: cameraWindowOpen(),
-					enabled: startedWithCameraInput && hasCameraInput(),
+					enabled: startedWithCameraInput() && hasCameraInput(),
 					action: () => {
-						if (!startedWithCameraInput || !hasCameraInput()) return;
+						if (!startedWithCameraInput() || !hasCameraInput()) return;
 						toggleCameraPreview.mutate();
 					},
 				}),
@@ -627,9 +642,7 @@ function InProgressRecordingInner() {
 			items.push(await PredefinedMenuItem.new({ item: "Separator" }));
 			items.push(
 				await MenuItem.new({
-					text: startedWithMicrophone
-						? "麦克风"
-						: "麦克风（本次录制已锁定）",
+					text: startedWithMicrophone() ? "麦克风" : "麦克风（本次录制已锁定）",
 					enabled: false,
 				}),
 			);
@@ -637,7 +650,7 @@ function InProgressRecordingInner() {
 				await CheckMenuItem.new({
 					text: NO_MICROPHONE,
 					checked: optionsQuery.rawOptions.micName == null,
-					enabled: startedWithMicrophone,
+					enabled: startedWithMicrophone(),
 					action: () => updateMicInput.mutate(null),
 				}),
 			);
@@ -646,7 +659,7 @@ function InProgressRecordingInner() {
 					await CheckMenuItem.new({
 						text: name,
 						checked: optionsQuery.rawOptions.micName === name,
-						enabled: startedWithMicrophone,
+						enabled: startedWithMicrophone(),
 						action: () => updateMicInput.mutate(name),
 					}),
 				);
@@ -654,7 +667,7 @@ function InProgressRecordingInner() {
 			items.push(await PredefinedMenuItem.new({ item: "Separator" }));
 			items.push(
 				await MenuItem.new({
-					text: startedWithCameraInput
+					text: startedWithCameraInput()
 						? "摄像头"
 						: "摄像头（本次录制已锁定）",
 					enabled: false,
@@ -664,7 +677,7 @@ function InProgressRecordingInner() {
 				await CheckMenuItem.new({
 					text: NO_WEBCAM,
 					checked: !hasCameraInput(),
-					enabled: startedWithCameraInput,
+					enabled: startedWithCameraInput(),
 					action: () => updateCameraInput.mutate(null),
 				}),
 			);
@@ -676,7 +689,7 @@ function InProgressRecordingInner() {
 							camera,
 							optionsQuery.rawOptions.cameraID ?? null,
 						),
-						enabled: startedWithCameraInput,
+						enabled: startedWithCameraInput(),
 						action: () => updateCameraInput.mutate(camera),
 					}),
 				);
@@ -864,13 +877,9 @@ function InProgressRecordingInner() {
 											class="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-100 hover:bg-gray-12/6 active:bg-gray-12/10 disabled:opacity-50 disabled:hover:bg-transparent dark:hover:bg-white/8 dark:active:bg-white/12"
 											disabled={toggleMicMute.isPending}
 											onClick={() => toggleMicMute.mutate()}
-											title={
-												micMuted() ? "取消静音" : "静音"
-											}
+											title={micMuted() ? "取消静音" : "静音"}
 											aria-pressed={micMuted() ? "true" : "false"}
-											aria-label={
-												micMuted() ? "取消静音" : "静音"
-											}
+											aria-label={micMuted() ? "取消静音" : "静音"}
 										>
 											{micMuted() ? (
 												<IconLucideMicOff class="size-5 text-red-9" />
@@ -945,14 +954,10 @@ function InProgressRecordingInner() {
 												disabled={togglePause.isPending || isCountdown()}
 												onClick={() => togglePause.mutate()}
 												title={
-													state().variant === "paused"
-														? "继续录制"
-														: "暂停录制"
+													state().variant === "paused" ? "继续录制" : "暂停录制"
 												}
 												aria-label={
-													state().variant === "paused"
-														? "继续录制"
-														: "暂停录制"
+													state().variant === "paused" ? "继续录制" : "暂停录制"
 												}
 											>
 												{state().variant === "paused" ? (

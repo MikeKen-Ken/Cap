@@ -17,6 +17,10 @@ import {
 } from "~/store";
 import { createQueryInvalidate } from "./events";
 import {
+	type RecordingOptionsLocalState,
+	recordingOptionsPatchFromStore,
+} from "./recording-options-sync";
+import {
 	type CameraInfo,
 	commands,
 	type DeviceOrModelID,
@@ -193,26 +197,51 @@ export function createOptionsQuery() {
 
 	let initialized = false;
 
+	const localStateSnapshot = (): RecordingOptionsLocalState => ({
+		captureTarget: _state.captureTarget,
+		micName: _state.micName,
+		mode: _state.mode,
+		captureSystemAudio: _state.captureSystemAudio,
+		cameraID: _state.cameraID,
+		organizationId: _state.organizationId,
+	});
+
+	const applyStoreData = (data: Parameters<
+		typeof recordingOptionsPatchFromStore
+	>[0]) => {
+		const patch = recordingOptionsPatchFromStore(data, localStateSnapshot());
+		if (!patch) return false;
+		batch(() => {
+			if (patch.captureTarget !== undefined) {
+				_setState("captureTarget", patch.captureTarget);
+			}
+			if (patch.micName !== undefined) {
+				_setState("micName", patch.micName);
+			}
+			if (patch.cameraID !== undefined) {
+				_setState("cameraID", patch.cameraID);
+			}
+			if (patch.mode !== undefined) {
+				_setState("mode", patch.mode);
+			}
+			if (patch.captureSystemAudio !== undefined) {
+				_setState("captureSystemAudio", patch.captureSystemAudio);
+			}
+			if (patch.organizationId !== undefined) {
+				_setState("organizationId", patch.organizationId);
+			}
+		});
+		return true;
+	};
+
+	const refreshFromStore = async () => {
+		const data = await recordingSettingsStore.get();
+		applyStoreData(data);
+	};
+
 	recordingSettingsStore.get().then((data) => {
 		batch(() => {
-			if (data?.target) {
-				_setState("captureTarget", data.target);
-			}
-			if (data?.micName !== undefined) {
-				_setState("micName", data.micName);
-			}
-			if (data?.cameraId !== undefined) {
-				_setState("cameraID", data.cameraId);
-			}
-			if (data?.mode && data.mode !== _state.mode) {
-				_setState("mode", data.mode);
-			}
-			if (data?.systemAudio !== undefined) {
-				_setState("captureSystemAudio", data.systemAudio);
-			}
-			if (data?.organizationId !== undefined) {
-				_setState("organizationId", data.organizationId);
-			}
+			applyStoreData(data);
 			initialized = true;
 		});
 	});
@@ -228,14 +257,12 @@ export function createOptionsQuery() {
 		};
 
 		if (initialized) {
-			recordingSettingsStore.set(settings);
+			void recordingSettingsStore.set(settings);
 		}
 	});
 
 	const storeListenerCleanup = recordingSettingsStore.listen((data) => {
-		if (data?.mode && data.mode !== _state.mode) {
-			_setState("mode", data.mode);
-		}
+		applyStoreData(data);
 	});
 	onCleanup(() => storeListenerCleanup.then((c) => c()));
 
@@ -243,7 +270,11 @@ export function createOptionsQuery() {
 		name: PERSIST_KEY,
 	});
 
-	return { rawOptions: state, setOptions: setState };
+	return {
+		rawOptions: state,
+		setOptions: setState,
+		refreshFromStore,
+	};
 }
 
 export function createCurrentRecordingQuery() {
