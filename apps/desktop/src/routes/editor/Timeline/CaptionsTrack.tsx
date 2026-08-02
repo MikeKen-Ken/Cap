@@ -149,7 +149,7 @@ export function CaptionsTrack(props: {
 								void props.onGenerate();
 							}}
 						>
-							{props.isGenerating ? "Generating..." : "Generate captions"}
+							{props.isGenerating ? "生成中..." : "生成字幕"}
 						</button>
 					</div>
 				}
@@ -251,7 +251,7 @@ export function CaptionsTrack(props: {
 								<div class="flex flex-col gap-0.5 justify-center items-center text-xs text-gray-1 dark:text-gray-12 w-full min-w-0 overflow-hidden">
 									<div class="flex gap-1 items-center text-[10px] w-full min-w-0 justify-center">
 										<span class="truncate max-w-full opacity-80">
-											{segment.text || "Caption"}
+											{segment.text || "字幕"}
 										</span>
 									</div>
 								</div>

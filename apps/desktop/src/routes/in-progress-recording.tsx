@@ -53,8 +53,8 @@ declare global {
 	}
 }
 
-const NO_MICROPHONE = "No Microphone";
-const NO_WEBCAM = "No Webcam";
+const NO_MICROPHONE = "无麦克风";
+const NO_WEBCAM = "无摄像头";
 const FAKE_WINDOW_BOUNDS_NAME = "recording-controls-interactive-area";
 
 export default function () {
@@ -136,11 +136,11 @@ function InProgressRecordingInner() {
 		const issues: string[] = [];
 		if (disconnectedInputs.microphone)
 			issues.push(
-				"Microphone disconnected. Silence will be used until it reconnects.",
+				"麦克风已断开。重新连接前将使用静音。",
 			);
 		if (disconnectedInputs.camera)
 			issues.push(
-				"Camera disconnected. Recording continues without camera overlay.",
+				"摄像头已断开。录制将继续，但不包含摄像头画面。",
 			);
 		const failure = recordingFailure();
 		if (failure) issues.push(failure);
@@ -157,10 +157,10 @@ function InProgressRecordingInner() {
 	const dismissIssuePanel = () => setIssuePanelVisible(false);
 	const hasCameraInput = () => optionsQuery.rawOptions.cameraID != null;
 	const microphoneTitle = createMemo(() => {
-		if (disconnectedInputs.microphone) return "Microphone disconnected";
+		if (disconnectedInputs.microphone) return "麦克风已断开";
 		if (optionsQuery.rawOptions.micName)
-			return `Microphone: ${optionsQuery.rawOptions.micName}`;
-		return "Microphone not configured";
+			return `麦克风：${optionsQuery.rawOptions.micName}`;
+		return "未配置麦克风";
 	});
 
 	const [pauseResumes, setPauseResumes] = createStore<
@@ -504,8 +504,8 @@ function InProgressRecordingInner() {
 	const restartRecording = createMutation(() => ({
 		mutationFn: async () => {
 			const shouldRestart = await dialog.confirm(
-				"Are you sure you want to restart the recording? The current recording will be discarded.",
-				{ title: "Confirm Restart", okLabel: "Restart", cancelLabel: "Cancel" },
+				"确定要重新开始录制吗？当前录制将被丢弃。",
+				{ title: "确认重新开始", okLabel: "重新开始", cancelLabel: "取消" },
 			);
 
 			if (!shouldRestart) return;
@@ -523,8 +523,8 @@ function InProgressRecordingInner() {
 	const deleteRecording = createMutation(() => ({
 		mutationFn: async () => {
 			const shouldDelete = await dialog.confirm(
-				"Are you sure you want to delete the recording?",
-				{ title: "Confirm Delete", okLabel: "Delete", cancelLabel: "Cancel" },
+				"确定要删除此次录制吗？",
+				{ title: "确认删除", okLabel: "删除", cancelLabel: "取消" },
 			);
 
 			if (!shouldDelete) return;
@@ -619,7 +619,7 @@ function InProgressRecordingInner() {
 			)[] = [];
 			items.push(
 				await CheckMenuItem.new({
-					text: "Show Camera Preview",
+					text: "显示摄像头预览",
 					checked: cameraWindowOpen(),
 					enabled: startedWithCameraInput && hasCameraInput(),
 					action: () => {
@@ -632,8 +632,8 @@ function InProgressRecordingInner() {
 			items.push(
 				await MenuItem.new({
 					text: startedWithMicrophone
-						? "Microphone"
-						: "Microphone (locked for this recording)",
+						? "麦克风"
+						: "麦克风（本次录制已锁定）",
 					enabled: false,
 				}),
 			);
@@ -659,8 +659,8 @@ function InProgressRecordingInner() {
 			items.push(
 				await MenuItem.new({
 					text: startedWithCameraInput
-						? "Webcam"
-						: "Webcam (locked for this recording)",
+						? "摄像头"
+						: "摄像头（本次录制已锁定）",
 					enabled: false,
 				}),
 			);
@@ -732,7 +732,7 @@ function InProgressRecordingInner() {
 							type="button"
 							class="text-red-9 transition hover:text-red-11"
 							onClick={() => dismissIssuePanel()}
-							aria-label="Dismiss recording issue"
+							aria-label="关闭录制问题提示"
 						>
 							<IconLucideX class="size-4" />
 						</button>
@@ -748,7 +748,7 @@ function InProgressRecordingInner() {
 										<div class="flex flex-row items-center gap-1.5 rounded-lg py-1 px-2 text-gray-12">
 											<IconLucideLoader2 class="size-4 animate-spin" />
 											<span class="text-[0.875rem] font-medium tabular-nums">
-												Starting
+												启动中
 											</span>
 										</div>
 									}
@@ -768,8 +768,8 @@ function InProgressRecordingInner() {
 											requestStopRecording();
 										}}
 										onClick={requestStopRecording}
-										title="Stop recording"
-										aria-label="Stop recording"
+										title="停止录制"
+										aria-label="停止录制"
 									>
 										<IconCapStopCircle />
 										<span class="text-[0.875rem] font-medium tabular-nums">
@@ -869,11 +869,11 @@ function InProgressRecordingInner() {
 											disabled={toggleMicMute.isPending}
 											onClick={() => toggleMicMute.mutate()}
 											title={
-												micMuted() ? "Unmute microphone" : "Mute microphone"
+												micMuted() ? "取消静音" : "静音"
 											}
 											aria-pressed={micMuted() ? "true" : "false"}
 											aria-label={
-												micMuted() ? "Unmute microphone" : "Mute microphone"
+												micMuted() ? "取消静音" : "静音"
 											}
 										>
 											{micMuted() ? (
@@ -898,7 +898,7 @@ function InProgressRecordingInner() {
 									<Show when={hasCameraInput() && disconnectedInputs.camera}>
 										<div
 											class="flex h-8 w-8 items-center justify-center"
-											title="Camera disconnected - recording continues without camera overlay"
+											title="摄像头已断开，录制将继续但不包含摄像头画面"
 										>
 											<IconLucideVideoOff class="size-5 text-amber-11" />
 										</div>
@@ -908,7 +908,7 @@ function InProgressRecordingInner() {
 											<div
 												class="flex h-8 w-8 items-center justify-center"
 												title={reason()}
-												aria-label="Recording quality degraded"
+												aria-label="录制质量已降级"
 											>
 												<div class="size-2 rounded-full bg-amber-9 animate-pulse" />
 											</div>
@@ -921,8 +921,8 @@ function InProgressRecordingInner() {
 												onClick={() => {
 													void closeStartingBar();
 												}}
-												title="Close recording controls"
-												aria-label="Close recording controls"
+												title="关闭录制控制"
+												aria-label="关闭录制控制"
 											>
 												<IconLucideX class="size-5" />
 											</ActionButton>
@@ -938,7 +938,7 @@ function InProgressRecordingInner() {
 												onClick={() => toggleIssuePanel()}
 												title={issueMessages().join(", ")}
 												aria-pressed={issuePanelVisible() ? "true" : "false"}
-												aria-label="Recording issues"
+												aria-label="录制问题"
 											>
 												<IconLucideAlertTriangle class="size-5" />
 											</ActionButton>
@@ -950,13 +950,13 @@ function InProgressRecordingInner() {
 												onClick={() => togglePause.mutate()}
 												title={
 													state().variant === "paused"
-														? "Resume recording"
-														: "Pause recording"
+														? "继续录制"
+														: "暂停录制"
 												}
 												aria-label={
 													state().variant === "paused"
-														? "Resume recording"
-														: "Pause recording"
+														? "继续录制"
+														: "暂停录制"
 												}
 											>
 												{state().variant === "paused" ? (
@@ -970,16 +970,16 @@ function InProgressRecordingInner() {
 										<ActionButton
 											disabled={restartRecording.isPending || isCountdown()}
 											onClick={() => restartRecording.mutate()}
-											title="Restart recording"
-											aria-label="Restart recording"
+											title="重新开始录制"
+											aria-label="重新开始录制"
 										>
 											<IconCapRestart />
 										</ActionButton>
 										<ActionButton
 											disabled={deleteRecording.isPending || isCountdown()}
 											onClick={() => deleteRecording.mutate()}
-											title="Delete recording"
-											aria-label="Delete recording"
+											title="删除录制"
+											aria-label="删除录制"
 										>
 											<IconCapTrash />
 										</ActionButton>
@@ -990,8 +990,8 @@ function InProgressRecordingInner() {
 											onClick={() => {
 												void openRecordingSettingsMenu();
 											}}
-											title="Recording settings"
-											aria-label="Recording settings"
+											title="录制设置"
+											aria-label="录制设置"
 										>
 											<IconCapSettings class="size-5" />
 										</ActionButton>

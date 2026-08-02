@@ -114,8 +114,8 @@ function RecentCard(props: {
 	const [imageAvailable, setImageAvailable] = createSignal(true);
 	const title = () => props.item.target.pretty_name;
 	const typeLabel = () => {
-		if (props.item.kind === "screenshot") return "Screenshot";
-		return props.item.target.mode === "studio" ? "Studio Mode" : "Instant Mode";
+		if (props.item.kind === "screenshot") return "截图";
+		return props.item.target.mode === "studio" ? "棚拍模式" : "即时模式";
 	};
 	const TypeIcon = () => {
 		if (props.item.kind === "screenshot") {
@@ -136,7 +136,7 @@ function RecentCard(props: {
 			type="button"
 			disabled={props.disabled}
 			onClick={props.onClick}
-			aria-label={`Open ${typeLabel()}: ${title()}`}
+			aria-label={`打开${typeLabel()}：${title()}`}
 			class={cx(
 				"group relative h-28 w-[196px] shrink-0 snap-start overflow-hidden rounded-xl border border-gray-5 bg-gray-3 text-left shadow-sm outline-hidden transition-[transform,border-color,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-gray-7 hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-9 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-1",
 				props.disabled && "pointer-events-none opacity-60",
@@ -181,7 +181,7 @@ function RecentCard(props: {
 				>
 					<p class="mt-0.5 text-[9px] text-white/65">
 						{props.item.kind === "recording"
-							? `${props.item.target.clip_count} clips`
+							? `${props.item.target.clip_count} 个片段`
 							: null}
 					</p>
 				</Show>
@@ -200,7 +200,7 @@ export default function Recents(props: {
 	return (
 		<section class="animate-in overflow-hidden fade-in slide-in-from-bottom-1 duration-200">
 			<div class="mb-2 flex items-center px-0.5">
-				<h2 class="text-xs font-semibold text-gray-12">Recents</h2>
+				<h2 class="text-xs font-semibold text-gray-12">最近</h2>
 			</div>
 			<Show when={props.errorMessage}>
 				<div class="flex h-28 items-center justify-center rounded-xl border border-dashed border-gray-5 bg-gray-2 px-4 text-center text-xs text-gray-10">
@@ -226,7 +226,7 @@ export default function Recents(props: {
 				<div class="flex h-28 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-5 bg-gray-2 text-center">
 					<IconLucideHistory class="size-5 text-gray-9" />
 					<p class="text-xs text-gray-10">
-						Your latest captures will appear here.
+						你的最近捕获将显示在这里。
 					</p>
 				</div>
 			</Show>

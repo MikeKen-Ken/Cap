@@ -109,8 +109,11 @@ const LOCKED_AREA_COMMIT_DELAY_MS = 180;
 const LIQUID_GLASS_SURFACE_CLASS =
 	"rounded-2xl border border-gray-12/10 bg-gray-1/82 shadow-xl shadow-black/20 backdrop-blur-xl dark:border-white/10 dark:bg-gray-2/82";
 
-const capitalize = (str: string) => {
-	return str.charAt(0).toUpperCase() + str.slice(1);
+const modeLabel = (mode: string) => {
+	if (mode === "studio") return "棚拍";
+	if (mode === "instant") return "即时";
+	if (mode === "screenshot") return "截图";
+	return mode;
 };
 
 const findCamera = (cameras: CameraInfo[], id?: DeviceOrModelID | null) => {
@@ -389,9 +392,9 @@ function Inner() {
 				<div class="relative w-screen h-screen flex flex-col items-center justify-center bg-black/70">
 					<div class="absolute inset-0 bg-black/60 -z-10" />
 					<div class="flex flex-col items-center text-white mb-4">
-						<span class="mb-2 text-3xl font-semibold">Camera Only</span>
+						<span class="mb-2 text-3xl font-semibold">仅摄像头</span>
 						<span class="text-xs text-gray-11">
-							Record using only your camera and microphone
+							仅使用摄像头和麦克风录制
 						</span>
 					</div>
 					<div class="flex justify-center w-full px-6 mb-4">
@@ -424,7 +427,7 @@ function Inner() {
 								<div class="flex flex-col items-center text-white">
 									<IconCapMonitor class="size-20 mb-3" />
 									<span class="mb-2 text-3xl font-semibold">
-										{display.name || "Monitor"}
+										{display.name || "显示器"}
 									</span>
 									<Show when={display.physical_size}>
 										{(size) => (
@@ -764,7 +767,7 @@ function Inner() {
 												});
 											}}
 										>
-											Adjust recording area
+											调整录制区域
 										</Button>
 										<ShowCapFreeWarning
 											isInstantMode={options.mode === "instant"}
@@ -1139,7 +1142,7 @@ function Inner() {
 						e.stopPropagation();
 						const items = [
 							{
-								text: "Reset selection",
+								text: "重置选区",
 								action: resetSelection,
 							},
 							await PredefinedMenuItem.new({
@@ -1299,7 +1302,7 @@ function Inner() {
 									await commands.closeTargetSelectOverlays();
 								} catch (e) {
 									const message = e instanceof Error ? e.message : String(e);
-									toast.error(`Failed to take screenshot: ${message}`);
+									toast.error(`截图失败：${message}`);
 									console.error("Failed to take screenshot", e);
 								}
 							}
@@ -1327,7 +1330,7 @@ function Inner() {
 										<div class="min-w-28 px-2 text-base font-normal leading-none tracking-[-0.01em] tabular-nums">
 											{isValid()
 												? `${Math.round(crop().width)} × ${Math.round(crop().height)}`
-												: "Draw an area"}
+												: "绘制区域"}
 										</div>
 
 										<div class="h-6 w-px bg-gray-5" />
@@ -1345,7 +1348,7 @@ function Inner() {
 												onClick={() => setAspect(null)}
 												aria-pressed={currentAspect() === null}
 											>
-												Free
+												自由
 											</button>
 											<For each={QUICK_AREA_RATIOS}>
 												{(ratio) => {
@@ -1373,8 +1376,8 @@ function Inner() {
 											type="button"
 											class="flex size-9 items-center justify-center rounded-xl text-gray-11 transition-colors hover:bg-gray-12/8 hover:text-gray-12"
 											onClick={showCropOptionsMenu}
-											title="More aspect ratios"
-											aria-label="More aspect ratios"
+											title="更多宽高比"
+											aria-label="更多宽高比"
 										>
 											<IconLucideRatio class="size-4" />
 										</button>
@@ -1385,8 +1388,8 @@ function Inner() {
 											type="button"
 											class="flex size-9 items-center justify-center rounded-xl text-gray-11 transition-colors hover:bg-gray-12/8 hover:text-gray-12"
 											onClick={resetSelection}
-											title="Reset selection"
-											aria-label="Reset selection"
+											title="重置选区"
+											aria-label="重置选区"
 										>
 											<IconLucideRotateCcw class="size-4" />
 										</button>
@@ -1394,8 +1397,8 @@ function Inner() {
 											type="button"
 											class="flex size-9 items-center justify-center rounded-xl text-gray-11 transition-colors hover:bg-gray-12/8 hover:text-gray-12"
 											onClick={() => cropperRef?.fill()}
-											title="Fill display"
-											aria-label="Fill display"
+											title="填满显示器"
+											aria-label="填满显示器"
 										>
 											<IconLucideMaximize2 class="size-4" />
 										</button>
@@ -1413,12 +1416,12 @@ function Inner() {
 												aria-pressed={isSelectionLocked()}
 												title={
 													isSelectionLocked()
-														? "Stop reusing this area"
-														: "Reuse this area for future recordings"
+														? "停止复用此区域"
+														: "后续录制复用此区域"
 												}
 											>
 												<IconLucideLock class="size-3.5" />
-												{isSelectionLocked() ? "Locked" : "Lock"}
+												{isSelectionLocked() ? "已锁定" : "锁定"}
 											</button>
 										</Show>
 									</div>
@@ -1466,13 +1469,13 @@ function Inner() {
 									<Show when={!isValid()}>
 										<div class="flex flex-col gap-1 items-center p-2.5 my-2 rounded-xl border min-w-fit w-fit bg-red-2 shadow-xs border-red-4 text-sm">
 											<p>
-												Minimum size is {minSize().width} x {minSize().height}
+												最小尺寸为 {minSize().width} x {minSize().height}
 											</p>
 											<small>
 												<code>
 													{crop().width} x {crop().height}
 												</code>{" "}
-												is too small
+												过小
 											</small>
 										</div>
 									</Show>
@@ -1807,7 +1810,7 @@ function CameraPreviewInline() {
 						fallback={
 							<div class="flex flex-col items-center gap-2 text-center px-4">
 								<IconCapCamera class="size-8 text-gray-9 mb-2" />
-								<div class="text-sm text-gray-11">Please select a camera</div>
+								<div class="text-sm text-gray-11">请选择摄像头</div>
 							</div>
 						}
 					>
@@ -1816,14 +1819,14 @@ function CameraPreviewInline() {
 							fallback={
 								<div class="flex flex-col items-center gap-2 text-center px-4">
 									<div class="text-sm text-red-400">
-										Camera connection failed
+										摄像头连接失败
 									</div>
 									<button
 										type="button"
 										onClick={handleRetryConnection}
 										class="text-xs text-blue-400 hover:text-blue-300 underline"
 									>
-										Try again
+										重试
 									</button>
 								</div>
 							}
@@ -1837,7 +1840,7 @@ function CameraPreviewInline() {
 								style={canvasStyle()}
 							/>
 							<Show when={!hasFrame()}>
-								<div class="text-sm text-gray-11">Loading camera...</div>
+								<div class="text-sm text-gray-11">摄像头加载中...</div>
 							</Show>
 						</Show>
 					</Show>
@@ -2008,7 +2011,7 @@ function RecordingControls(props: {
 				await commands.closeTargetSelectOverlays();
 			} catch (e) {
 				const message = e instanceof Error ? e.message : String(e);
-				toast.error(`Failed to take screenshot: ${message}`);
+				toast.error(`截图失败：${message}`);
 				console.error("Failed to take screenshot", e);
 			}
 			return;
@@ -2037,10 +2040,10 @@ function RecordingControls(props: {
 					msg.includes("DeviceNotFound")
 				) {
 					toast.error(
-						"Selected microphone is not available. Please select a different microphone in settings.",
+						"所选麦克风不可用，请在设置中选择其他麦克风。",
 					);
 				} else {
-					toast.error(`Failed to start recording: ${msg}`);
+					toast.error(`开始录制失败：${msg}`);
 				}
 				// An IPC-level rejection never reaches the backend, so no
 				// StartFailed event fires; the picker flow hid the main
@@ -2057,7 +2060,7 @@ function RecordingControls(props: {
 		await Menu.new({
 			items: [
 				await CheckMenuItem.new({
-					text: "Studio Mode",
+					text: "棚拍模式",
 					action: () => {
 						setOptions("mode", "studio");
 						commands.setRecordingMode("studio");
@@ -2065,7 +2068,7 @@ function RecordingControls(props: {
 					checked: rawOptions.mode === "studio",
 				}),
 				await CheckMenuItem.new({
-					text: "Instant Mode",
+					text: "即时模式",
 					action: () => {
 						setOptions("mode", "instant");
 						commands.setRecordingMode("instant");
@@ -2073,7 +2076,7 @@ function RecordingControls(props: {
 					checked: rawOptions.mode === "instant",
 				}),
 				await CheckMenuItem.new({
-					text: "Screenshot Mode",
+					text: "截图模式",
 					action: () => {
 						setOptions("mode", "screenshot");
 						commands.setRecordingMode("screenshot");
@@ -2085,24 +2088,24 @@ function RecordingControls(props: {
 
 	const countdownItems = async () => [
 		await CheckMenuItem.new({
-			text: "Off",
+			text: "关闭",
 			action: () => generalSettingsStore.set({ recordingCountdown: 0 }),
 			checked:
 				!generalSetings.data?.recordingCountdown ||
 				generalSetings.data?.recordingCountdown === 0,
 		}),
 		await CheckMenuItem.new({
-			text: "3 seconds",
+			text: "3 秒",
 			action: () => generalSettingsStore.set({ recordingCountdown: 3 }),
 			checked: generalSetings.data?.recordingCountdown === 3,
 		}),
 		await CheckMenuItem.new({
-			text: "5 seconds",
+			text: "5 秒",
 			action: () => generalSettingsStore.set({ recordingCountdown: 5 }),
 			checked: generalSetings.data?.recordingCountdown === 5,
 		}),
 		await CheckMenuItem.new({
-			text: "10 seconds",
+			text: "10 秒",
 			action: () => generalSettingsStore.set({ recordingCountdown: 10 }),
 			checked: generalSetings.data?.recordingCountdown === 10,
 		}),
@@ -2112,7 +2115,7 @@ function RecordingControls(props: {
 		return await Menu.new({
 			items: [
 				await MenuItem.new({
-					text: "Recording Countdown",
+					text: "录制倒计时",
 					enabled: false,
 				}),
 				...(await countdownItems()),
@@ -2182,15 +2185,21 @@ function RecordingControls(props: {
 										<span class="text-[0.95rem] font-medium text-white text-nowrap">
 											{(() => {
 												if (rawOptions.mode === "instant" && !auth.data)
-													return "Sign In To Use";
-												if (startLoading()) return "Preparing...";
+													return "登录后使用";
+												if (startLoading()) return "准备中...";
 												if (rawOptions.mode === "screenshot")
-													return "Take Screenshot";
-												return "Start Recording";
+													return "截图";
+												return "开始录制";
 											})()}
 										</span>
 										<span class="text-[11px] flex items-center text-nowrap gap-1 transition-opacity duration-200 text-white/90 font-light -mt-0.5">
-											{`${capitalize(rawOptions.mode)} Mode`}
+											{`${
+												rawOptions.mode === "studio"
+													? "棚拍"
+													: rawOptions.mode === "instant"
+														? "即时"
+														: "截图"
+											}模式`}
 										</span>
 									</div>
 								</div>
@@ -2208,24 +2217,23 @@ function RecordingControls(props: {
 										<IconLucideAlertTriangle class="mt-0.5 size-4 shrink-0 text-amber-10" />
 										<div class="flex flex-col gap-1">
 											<p class="text-sm font-semibold">
-												No microphone detected
+												未检测到麦克风
 											</p>
 											<p class="text-xs leading-relaxed text-gray-10">
-												This recording will not include your voice. Select a
-												microphone, or continue without one.
+												此次录制将不包含你的声音。请选择麦克风，或继续无麦录制。
 											</p>
 										</div>
 									</div>
 									<div class="flex gap-2 justify-end mt-3">
 										<Popover.CloseButton class="px-3 h-8 text-xs font-medium rounded-lg border border-gray-4 bg-gray-2 text-gray-12 hover:bg-gray-3">
-											Go back
+											返回
 										</Popover.CloseButton>
 										<button
 											type="button"
 											class="px-3 h-8 text-xs font-medium text-white rounded-lg bg-blue-9 hover:bg-blue-10"
 											onClick={() => void startRecording(true)}
 										>
-											Record without microphone
+											无麦继续录制
 										</button>
 									</div>
 								</Popover.Content>
@@ -2294,8 +2302,16 @@ function RecordingControls(props: {
 				>
 					<IconCapInfo class="opacity-70 will-change-transform size-3" />
 					<p class="text-sm text-white drop-shadow-md">
-						<span class="opacity-70">What is </span>
-						<span class="font-medium">{capitalize(rawOptions.mode)} Mode</span>?
+						<span class="opacity-70">什么是</span>
+						<span class="font-medium">
+							{rawOptions.mode === "studio"
+								? "棚拍"
+								: rawOptions.mode === "instant"
+									? "即时"
+									: "截图"}
+							模式
+						</span>
+						？
 					</p>
 				</div>
 			</div>

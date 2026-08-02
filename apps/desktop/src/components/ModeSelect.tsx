@@ -63,21 +63,21 @@ const ModeSelect = (props: { onClose?: () => void; standalone?: boolean }) => {
 
 	const modeOptions = [
 		{
-			mode: "instant" as const,
-			title: "Instant",
-			description: "Share instantly with a link. Uploads as you record.",
-			icon: IconCapInstant,
-		},
-		{
 			mode: "studio" as const,
-			title: "Studio",
-			description: "Highest quality local recording for editing later.",
+			title: "棚拍",
+			description: "本地最高画质录制，便于之后编辑。",
 			icon: IconCapFilmCut,
 		},
 		{
+			mode: "instant" as const,
+			title: "即时",
+			description: "边录边上传，用链接即时分享（需登录）。",
+			icon: IconCapInstant,
+		},
+		{
 			mode: "screenshot" as const,
-			title: "Screenshot",
-			description: "Capture and annotate screenshots instantly.",
+			title: "截图",
+			description: "快速截取并标注屏幕画面。",
 			icon: IconCapScreenshot,
 		},
 	];

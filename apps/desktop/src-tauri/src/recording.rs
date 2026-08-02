@@ -1623,7 +1623,7 @@ pub async fn start_recording(
     let (video_upload_info, instant_mode_max_resolution) = match inputs.mode {
         RecordingMode::Instant => {
             let Some(auth) = AuthStore::get(&app).ok().flatten() else {
-                let error = "Please sign in to use instant recording".to_string();
+                    let error = "请先登录后再使用即时录制".to_string();
                 state_mtx.write().await.clear_pending_recording();
                 notify_recording_start_failed(&app, &error);
                 return Err(error);
@@ -1656,7 +1656,7 @@ pub async fn start_recording(
                     // invoked us may already be gone — surface it as a start failure too.
                     notify_recording_start_failed(
                         &app,
-                        "Your session has expired. Please sign in again to use instant recording.",
+                        "登录已过期，请重新登录后再使用即时录制。",
                     );
                     return Ok(RecordingAction::InvalidAuthentication);
                 }
@@ -1664,7 +1664,7 @@ pub async fn start_recording(
                     state_mtx.write().await.clear_pending_recording();
                     notify_recording_start_failed(
                         &app,
-                        "Instant recording requires an upgraded plan.",
+                        "即时录制需要升级套餐。",
                     );
                     return Ok(RecordingAction::UpgradeRequired);
                 }

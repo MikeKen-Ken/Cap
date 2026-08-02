@@ -11,24 +11,23 @@ interface ModeInfoPanelProps {
 
 const modeOptions = [
 	{
-		mode: "instant" as RecordingMode,
-		title: "Instant",
-		description:
-			"Share instantly with a link. Your recording uploads as you record, so you can share it immediately when you're done.",
-		icon: IconCapInstant,
-	},
-	{
 		mode: "studio" as RecordingMode,
-		title: "Studio",
+		title: "棚拍",
 		description:
-			"Record locally in the highest quality for editing later. Perfect for creating polished content with effects and transitions.",
+			"以最高画质在本地录制，结束后可在编辑器中精修特效与转场，再导出文件。",
 		icon: IconCapFilmCut,
 	},
 	{
-		mode: "screenshot" as RecordingMode,
-		title: "Screenshot",
+		mode: "instant" as RecordingMode,
+		title: "即时",
 		description:
-			"Capture and annotate screenshots instantly. Great for quick captures, bug reports, and visual communication.",
+			"边录边上传，结束后即可用链接分享。此模式需要登录。",
+		icon: IconCapInstant,
+	},
+	{
+		mode: "screenshot" as RecordingMode,
+		title: "截图",
+		description: "快速截取并标注屏幕，适合反馈问题或沟通说明。",
 		icon: IconCapScreenshot,
 	},
 ];
@@ -53,9 +52,9 @@ export default function ModeInfoPanel(props: ModeInfoPanelProps) {
 					focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-9 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-1"
 				>
 					<IconLucideArrowLeft class="size-3 text-gray-11" />
-					<span class="font-medium text-gray-12">Back</span>
+					<span class="font-medium text-gray-12">返回</span>
 				</button>
-				<span class="text-xs font-medium text-gray-11">Recording Modes</span>
+				<span class="text-xs font-medium text-gray-11">录制模式</span>
 			</div>
 			<div class="flex flex-col flex-1 min-h-0 pt-4">
 				<div class="px-1 custom-scroll flex-1 overflow-y-auto">

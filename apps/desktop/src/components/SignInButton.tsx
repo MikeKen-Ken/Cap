@@ -13,7 +13,7 @@ export function SignInButton(
 			size="md"
 			class="flex grow justify-center items-center"
 			{...props}
-			variant={signIn.isPending ? "gray" : "primary"}
+			variant={signIn.isPending ? "gray" : (props.variant ?? "primary")}
 			onClick={() => {
 				if (signIn.isPending) {
 					signIn.variables.abort();
@@ -23,7 +23,7 @@ export function SignInButton(
 				}
 			}}
 		>
-			{signIn.isPending ? "Cancel Sign In" : (props.children ?? "Sign In")}
+			{signIn.isPending ? "取消登录" : (props.children ?? "登录")}
 		</Button>
 	);
 }

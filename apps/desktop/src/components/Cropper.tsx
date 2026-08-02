@@ -1566,7 +1566,7 @@ export function createCropOptionsMenuItems(options: {
 }) {
 	return [
 		{
-			text: "Free",
+			text: "自由",
 			checked: !options.aspect,
 			action: () => options.onAspectSet(null),
 		} satisfies CheckMenuItemOptions,
@@ -1581,7 +1581,7 @@ export function createCropOptionsMenuItems(options: {
 		),
 		{ item: "Separator" } satisfies PredefinedMenuItemOptions,
 		{
-			text: "Snap to ratios",
+			text: "吸附宽高比",
 			checked: options.snapToRatioEnabled,
 			action: () => options.onSnapToRatioSet(!options.snapToRatioEnabled),
 		} satisfies CheckMenuItemOptions,
