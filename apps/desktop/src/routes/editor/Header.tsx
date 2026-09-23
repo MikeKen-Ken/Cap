@@ -101,12 +101,12 @@ export function Header() {
 					onClick={async () => {
 						clearTimelineSelection();
 
-						if (!(await ask("确定要删除此录制吗？")))
+						if (!(await ask("Are you sure you want to delete this recording?")))
 							return;
 
 						await commands.editorDeleteProject();
 					}}
-					tooltipText="删除录制"
+					tooltipText="Delete recording"
 					leftIcon={<IconCapTrash class="w-5" />}
 				/>
 				<EditorButton
@@ -116,7 +116,7 @@ export function Header() {
 						console.log({ path: `${editorInstance.path}/` });
 						revealItemInDir(`${editorInstance.path}/`);
 					}}
-					tooltipText="打开录制包"
+					tooltipText="Open recording bundle"
 					leftIcon={<IconLucideFolder class="w-5" />}
 				/>
 
@@ -151,7 +151,7 @@ export function Header() {
 					disabled={
 						!projectHistory.canUndo() && !editorState.timeline.selection
 					}
-					tooltipText="撤销"
+					tooltipText="Undo"
 					leftIcon={<IconCapUndo class="w-5" />}
 				/>
 				<EditorButton
@@ -163,7 +163,7 @@ export function Header() {
 					disabled={
 						!projectHistory.canRedo() && !editorState.timeline.selection
 					}
-					tooltipText="重做"
+					tooltipText="Redo"
 					leftIcon={<IconCapRedo class="w-5" />}
 				/>
 				<div data-tauri-drag-region class="flex-1 h-full" />
@@ -183,7 +183,7 @@ export function Header() {
 					}}
 				>
 					<IconCapClapperboard class="size-4" />
-					片段
+					Clips
 				</Button>
 				<Show when={hasTranscript()}>
 					<Button
@@ -204,7 +204,7 @@ export function Header() {
 						>
 							<IconLucideArrowLeft class="size-4" />
 						</Show>
-						{isTranscriptOpen() ? "返回" : "字幕"}
+						{isTranscriptOpen() ? "Back" : "Captions"}
 					</Button>
 				</Show>
 				<button
@@ -227,7 +227,7 @@ export function Header() {
 					}}
 				>
 					<UploadIcon class="size-4" />
-					导出
+					Export
 				</button>
 				{ostype() === "windows" && <CaptionControlsWindows11 />}
 			</div>

@@ -56,15 +56,15 @@ export function PlayerContent() {
 	} = useEditorContext();
 
 	const previewOptions = [
-		{ label: "完整", value: "full" as EditorPreviewQuality },
-		{ label: "一半", value: "half" as EditorPreviewQuality },
-		{ label: "四分之一", value: "quarter" as EditorPreviewQuality },
+		{ label: "Full", value: "full" as EditorPreviewQuality },
+		{ label: "Half", value: "half" as EditorPreviewQuality },
+		{ label: "Quarter", value: "quarter" as EditorPreviewQuality },
 	];
 
 	const zoomHint = () =>
 		ostype() === "windows"
-			? "按住 Ctrl 并滚动，或按 Ctrl +/- 缩放"
-			: "双指捏合，或按 Cmd +/- 缩放";
+			? "Hold Ctrl and scroll, or press Ctrl +/- to zoom"
+			: "Pinch, or press Cmd +/- to zoom";
 
 	// Load captions on mount
 	onMount(async () => {
@@ -290,16 +290,16 @@ export function PlayerContent() {
 				<div class="flex items-center gap-3">
 					<AspectRatioSelect />
 					<EditorButton
-						tooltipText="裁剪视频"
+						tooltipText="Crop Video"
 						onClick={cropDialogHandler}
 						leftIcon={<IconCapCrop class="w-5 text-gray-12" />}
 					>
-						裁剪
+						Crop
 					</EditorButton>
 					<FrameButton />
 				</div>
 				<div class="flex items-center gap-2">
-					<span class="text-xs font-medium text-gray-11">预览质量</span>
+					<span class="text-xs font-medium text-gray-11">Preview quality</span>
 					<KSelect<{ label: string; value: EditorPreviewQuality }>
 						options={previewOptions}
 						optionValue="value"
@@ -331,7 +331,7 @@ export function PlayerContent() {
 								value: EditorPreviewQuality;
 							}> class="flex-1 text-left truncate">
 								{(state) =>
-									state.selectedOption()?.label ?? "选择预览质量"
+									state.selectedOption()?.label ?? "Select preview quality"
 								}
 							</KSelect.Value>
 							<KSelect.Icon>
@@ -378,7 +378,7 @@ export function PlayerContent() {
 					>
 						<IconCapPrev class="text-gray-12 size-3" />
 					</button>
-					<Tooltip kbd={["Space"]} content="播放/暂停视频">
+					<Tooltip kbd={["Space"]} content="Play/Pause video">
 						<button
 							type="button"
 							onClick={handlePlayPauseClick}
@@ -406,7 +406,7 @@ export function PlayerContent() {
 				<div class="flex flex-row flex-1 gap-4 justify-end items-center">
 					<div class="flex-1" />
 					<EditorButton<typeof KToggleButton>
-						tooltipText="切换分割"
+						tooltipText="Toggle Split"
 						kbd={["S"]}
 						pressed={editorState.timeline.interactMode === "split"}
 						onChange={(v: boolean) =>
@@ -425,7 +425,7 @@ export function PlayerContent() {
 						}
 					/>
 					<div class="w-px h-8 rounded-full bg-gray-4" />
-					<Tooltip kbd={["meta", "-"]} content="缩小">
+					<Tooltip kbd={["meta", "-"]} content="Zoom out">
 						<IconCapZoomOut
 							onClick={() => {
 								editorState.timeline.transform.updateZoom(
@@ -436,7 +436,7 @@ export function PlayerContent() {
 							class="text-gray-12 size-5 will-change-[opacity] transition-opacity hover:opacity-70"
 						/>
 					</Tooltip>
-					<Tooltip kbd={["meta", "+"]} content="放大">
+					<Tooltip kbd={["meta", "+"]} content="Zoom in">
 						<IconCapZoomIn
 							onClick={() => {
 								editorState.timeline.transform.updateZoom(
@@ -468,9 +468,9 @@ export function PlayerContent() {
 							);
 						}}
 						formatTooltip={() =>
-							`可见 ${editorState.timeline.transform.zoom.toFixed(
+							`${editorState.timeline.transform.zoom.toFixed(
 								0,
-							)} 秒`
+							)} seconds visible`
 						}
 					/>
 				</div>
@@ -506,7 +506,7 @@ function PreviewCanvas() {
 			items: [
 				{
 					id: "performance-mode",
-					text: performanceMode() ? "✓ 性能模式" : "性能模式",
+					text: performanceMode() ? "✓ Performance Mode" : "Performance Mode",
 					action: () => setPerformanceMode(!performanceMode()),
 				},
 			],

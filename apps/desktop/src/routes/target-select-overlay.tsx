@@ -109,11 +109,8 @@ const LOCKED_AREA_COMMIT_DELAY_MS = 180;
 const LIQUID_GLASS_SURFACE_CLASS =
 	"rounded-2xl border border-gray-12/10 bg-gray-1/82 shadow-xl shadow-black/20 backdrop-blur-xl dark:border-white/10 dark:bg-gray-2/82";
 
-const modeLabel = (mode: string) => {
-	if (mode === "studio") return "棚拍";
-	if (mode === "instant") return "即时";
-	if (mode === "screenshot") return "截图";
-	return mode;
+const capitalize = (str: string) => {
+	return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 const findCamera = (cameras: CameraInfo[], id?: DeviceOrModelID | null) => {
@@ -392,9 +389,9 @@ function Inner() {
 				<div class="relative w-screen h-screen flex flex-col items-center justify-center bg-black/70">
 					<div class="absolute inset-0 bg-black/60 -z-10" />
 					<div class="flex flex-col items-center text-white mb-4">
-						<span class="mb-2 text-3xl font-semibold">仅摄像头</span>
+						<span class="mb-2 text-3xl font-semibold">Camera Only</span>
 						<span class="text-xs text-gray-11">
-							仅使用摄像头和麦克风录制
+							Record using only your camera and microphone
 						</span>
 					</div>
 					<div class="flex justify-center w-full px-6 mb-4">
@@ -427,7 +424,7 @@ function Inner() {
 								<div class="flex flex-col items-center text-white">
 									<IconCapMonitor class="size-20 mb-3" />
 									<span class="mb-2 text-3xl font-semibold">
-										{display.name || "显示器"}
+										{display.name || "Monitor"}
 									</span>
 									<Show when={display.physical_size}>
 										{(size) => (
@@ -694,14 +691,14 @@ function Inner() {
 													variant: "window",
 													id: windowUnderCursor.id,
 												}}
-												onRecordingStart={() => {
-													setOriginalCameraBounds(null);
-													// Screenshot mode must keep this webview alive until
-													// takeScreenshot returns — closing here destroys the
-													// invoke and looks like a no-op (display mode already
-													// no-ops via dismissPickerForRecordingStart).
-													if (options.mode === "screenshot") return;
-													dismissPickerForRecordingStart();
+											onRecordingStart={() => {
+												setOriginalCameraBounds(null);
+												// Screenshot mode must keep this webview alive until
+												// takeScreenshot returns — closing here destroys the
+												// invoke and looks like a no-op (display mode already
+												// no-ops via dismissPickerForRecordingStart).
+												if (options.mode === "screenshot") return;
+												dismissPickerForRecordingStart();
 												}}
 												onClose={() => {
 													setSelectedWindow(null);
@@ -754,7 +751,7 @@ function Inner() {
 												});
 											}}
 										>
-											调整录制区域
+											Adjust recording area
 										</Button>
 										<ShowCapFreeWarning
 											isInstantMode={options.mode === "instant"}
@@ -1129,7 +1126,7 @@ function Inner() {
 						e.stopPropagation();
 						const items = [
 							{
-								text: "重置选区",
+								text: "Reset selection",
 								action: resetSelection,
 							},
 							await PredefinedMenuItem.new({
@@ -1289,7 +1286,7 @@ function Inner() {
 									await commands.closeTargetSelectOverlays();
 								} catch (e) {
 									const message = e instanceof Error ? e.message : String(e);
-									toast.error(`截图失败：${message}`);
+									toast.error(`Failed to take screenshot: ${message}`);
 									console.error("Failed to take screenshot", e);
 									const allWindows = await WebviewWindow.getAll();
 									for (const win of allWindows) {
@@ -1324,7 +1321,7 @@ function Inner() {
 										<div class="min-w-28 px-2 text-base font-normal leading-none tracking-[-0.01em] tabular-nums">
 											{isValid()
 												? `${Math.round(crop().width)} × ${Math.round(crop().height)}`
-												: "绘制区域"}
+												: "Draw an area"}
 										</div>
 
 										<div class="h-6 w-px bg-gray-5" />
@@ -1342,7 +1339,7 @@ function Inner() {
 												onClick={() => setAspect(null)}
 												aria-pressed={currentAspect() === null}
 											>
-												自由
+												Free
 											</button>
 											<For each={QUICK_AREA_RATIOS}>
 												{(ratio) => {
@@ -1370,8 +1367,8 @@ function Inner() {
 											type="button"
 											class="flex size-9 items-center justify-center rounded-xl text-gray-11 transition-colors hover:bg-gray-12/8 hover:text-gray-12"
 											onClick={showCropOptionsMenu}
-											title="更多宽高比"
-											aria-label="更多宽高比"
+											title="More aspect ratios"
+											aria-label="More aspect ratios"
 										>
 											<IconLucideRatio class="size-4" />
 										</button>
@@ -1382,8 +1379,8 @@ function Inner() {
 											type="button"
 											class="flex size-9 items-center justify-center rounded-xl text-gray-11 transition-colors hover:bg-gray-12/8 hover:text-gray-12"
 											onClick={resetSelection}
-											title="重置选区"
-											aria-label="重置选区"
+											title="Reset selection"
+											aria-label="Reset selection"
 										>
 											<IconLucideRotateCcw class="size-4" />
 										</button>
@@ -1391,8 +1388,8 @@ function Inner() {
 											type="button"
 											class="flex size-9 items-center justify-center rounded-xl text-gray-11 transition-colors hover:bg-gray-12/8 hover:text-gray-12"
 											onClick={() => cropperRef?.fill()}
-											title="填满显示器"
-											aria-label="填满显示器"
+											title="Fill display"
+											aria-label="Fill display"
 										>
 											<IconLucideMaximize2 class="size-4" />
 										</button>
@@ -1410,12 +1407,12 @@ function Inner() {
 												aria-pressed={isSelectionLocked()}
 												title={
 													isSelectionLocked()
-														? "停止复用此区域"
-														: "后续录制复用此区域"
+														? "Stop reusing this area"
+														: "Reuse this area for future recordings"
 												}
 											>
 												<IconLucideLock class="size-3.5" />
-												{isSelectionLocked() ? "已锁定" : "锁定"}
+												{isSelectionLocked() ? "Locked" : "Lock"}
 											</button>
 										</Show>
 									</div>
@@ -1463,13 +1460,13 @@ function Inner() {
 									<Show when={!isValid()}>
 										<div class="flex flex-col gap-1 items-center p-2.5 my-2 rounded-xl border min-w-fit w-fit bg-red-2 shadow-xs border-red-4 text-sm">
 											<p>
-												最小尺寸为 {minSize().width} x {minSize().height}
+												Minimum size is {minSize().width} x {minSize().height}
 											</p>
 											<small>
 												<code>
 													{crop().width} x {crop().height}
 												</code>{" "}
-												过小
+												is too small
 											</small>
 										</div>
 									</Show>
@@ -1804,7 +1801,7 @@ function CameraPreviewInline() {
 						fallback={
 							<div class="flex flex-col items-center gap-2 text-center px-4">
 								<IconCapCamera class="size-8 text-gray-9 mb-2" />
-								<div class="text-sm text-gray-11">请选择摄像头</div>
+								<div class="text-sm text-gray-11">Please select a camera</div>
 							</div>
 						}
 					>
@@ -1813,14 +1810,14 @@ function CameraPreviewInline() {
 							fallback={
 								<div class="flex flex-col items-center gap-2 text-center px-4">
 									<div class="text-sm text-red-400">
-										摄像头连接失败
+										Camera connection failed
 									</div>
 									<button
 										type="button"
 										onClick={handleRetryConnection}
 										class="text-xs text-blue-400 hover:text-blue-300 underline"
 									>
-										重试
+										Try again
 									</button>
 								</div>
 							}
@@ -1834,7 +1831,7 @@ function CameraPreviewInline() {
 								style={canvasStyle()}
 							/>
 							<Show when={!hasFrame()}>
-								<div class="text-sm text-gray-11">摄像头加载中...</div>
+								<div class="text-sm text-gray-11">Loading camera...</div>
 							</Show>
 						</Show>
 					</Show>
@@ -2005,7 +2002,7 @@ function RecordingControls(props: {
 				await commands.closeTargetSelectOverlays();
 			} catch (e) {
 				const message = e instanceof Error ? e.message : String(e);
-				toast.error(`截图失败：${message}`);
+				toast.error(`Failed to take screenshot: ${message}`);
 				console.error("Failed to take screenshot", e);
 				const allWindows = await WebviewWindow.getAll();
 				for (const win of allWindows) {
@@ -2041,10 +2038,10 @@ function RecordingControls(props: {
 					msg.includes("DeviceNotFound")
 				) {
 					toast.error(
-						"所选麦克风不可用，请在设置中选择其他麦克风。",
+						"Selected microphone is not available. Please select a different microphone in settings.",
 					);
 				} else {
-					toast.error(`开始录制失败：${msg}`);
+					toast.error(`Failed to start recording: ${msg}`);
 				}
 				// An IPC-level rejection never reaches the backend, so no
 				// StartFailed event fires; the picker flow hid the main
@@ -2061,7 +2058,7 @@ function RecordingControls(props: {
 		await Menu.new({
 			items: [
 				await CheckMenuItem.new({
-					text: "棚拍模式",
+					text: "Studio Mode",
 					action: () => {
 						setOptions("mode", "studio");
 						commands.setRecordingMode("studio");
@@ -2069,7 +2066,7 @@ function RecordingControls(props: {
 					checked: rawOptions.mode === "studio",
 				}),
 				await CheckMenuItem.new({
-					text: "即时模式",
+					text: "Instant Mode",
 					action: () => {
 						setOptions("mode", "instant");
 						commands.setRecordingMode("instant");
@@ -2077,7 +2074,7 @@ function RecordingControls(props: {
 					checked: rawOptions.mode === "instant",
 				}),
 				await CheckMenuItem.new({
-					text: "截图模式",
+					text: "Screenshot Mode",
 					action: () => {
 						setOptions("mode", "screenshot");
 						commands.setRecordingMode("screenshot");
@@ -2089,24 +2086,24 @@ function RecordingControls(props: {
 
 	const countdownItems = async () => [
 		await CheckMenuItem.new({
-			text: "关闭",
+			text: "Off",
 			action: () => generalSettingsStore.set({ recordingCountdown: 0 }),
 			checked:
 				!generalSetings.data?.recordingCountdown ||
 				generalSetings.data?.recordingCountdown === 0,
 		}),
 		await CheckMenuItem.new({
-			text: "3 秒",
+			text: "3 seconds",
 			action: () => generalSettingsStore.set({ recordingCountdown: 3 }),
 			checked: generalSetings.data?.recordingCountdown === 3,
 		}),
 		await CheckMenuItem.new({
-			text: "5 秒",
+			text: "5 seconds",
 			action: () => generalSettingsStore.set({ recordingCountdown: 5 }),
 			checked: generalSetings.data?.recordingCountdown === 5,
 		}),
 		await CheckMenuItem.new({
-			text: "10 秒",
+			text: "10 seconds",
 			action: () => generalSettingsStore.set({ recordingCountdown: 10 }),
 			checked: generalSetings.data?.recordingCountdown === 10,
 		}),
@@ -2116,7 +2113,7 @@ function RecordingControls(props: {
 		return await Menu.new({
 			items: [
 				await MenuItem.new({
-					text: "录制倒计时",
+					text: "Recording Countdown",
 					enabled: false,
 				}),
 				...(await countdownItems()),
@@ -2186,21 +2183,15 @@ function RecordingControls(props: {
 										<span class="text-[0.95rem] font-medium text-white text-nowrap">
 											{(() => {
 												if (rawOptions.mode === "instant" && !auth.data)
-													return "登录后使用";
-												if (startLoading()) return "准备中...";
+													return "Sign In To Use";
+												if (startLoading()) return "Preparing...";
 												if (rawOptions.mode === "screenshot")
-													return "截图";
-												return "开始录制";
+													return "Take Screenshot";
+												return "Start Recording";
 											})()}
 										</span>
 										<span class="text-[11px] flex items-center text-nowrap gap-1 transition-opacity duration-200 text-white/90 font-light -mt-0.5">
-											{`${
-												rawOptions.mode === "studio"
-													? "棚拍"
-													: rawOptions.mode === "instant"
-														? "即时"
-														: "截图"
-											}模式`}
+											{`${capitalize(rawOptions.mode)} Mode`}
 										</span>
 									</div>
 								</div>
@@ -2218,23 +2209,24 @@ function RecordingControls(props: {
 										<IconLucideAlertTriangle class="mt-0.5 size-4 shrink-0 text-amber-10" />
 										<div class="flex flex-col gap-1">
 											<p class="text-sm font-semibold">
-												未检测到麦克风
+												No microphone detected
 											</p>
 											<p class="text-xs leading-relaxed text-gray-10">
-												此次录制将不包含你的声音。请选择麦克风，或继续无麦录制。
+												This recording will not include your voice. Select a
+												microphone, or continue without one.
 											</p>
 										</div>
 									</div>
 									<div class="flex gap-2 justify-end mt-3">
 										<Popover.CloseButton class="px-3 h-8 text-xs font-medium rounded-lg border border-gray-4 bg-gray-2 text-gray-12 hover:bg-gray-3">
-											返回
+											Go back
 										</Popover.CloseButton>
 										<button
 											type="button"
 											class="px-3 h-8 text-xs font-medium text-white rounded-lg bg-blue-9 hover:bg-blue-10"
 											onClick={() => void startRecording(true)}
 										>
-											无麦继续录制
+											Record without microphone
 										</button>
 									</div>
 								</Popover.Content>
@@ -2303,16 +2295,8 @@ function RecordingControls(props: {
 				>
 					<IconCapInfo class="opacity-70 will-change-transform size-3" />
 					<p class="text-sm text-white drop-shadow-md">
-						<span class="opacity-70">什么是</span>
-						<span class="font-medium">
-							{rawOptions.mode === "studio"
-								? "棚拍"
-								: rawOptions.mode === "instant"
-									? "即时"
-									: "截图"}
-							模式
-						</span>
-						？
+						<span class="opacity-70">What is </span>
+						<span class="font-medium">{capitalize(rawOptions.mode)} Mode</span>?
 					</p>
 				</div>
 			</div>

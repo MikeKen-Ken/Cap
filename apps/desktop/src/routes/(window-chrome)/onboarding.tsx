@@ -69,45 +69,45 @@ interface ModeDetail {
 
 const modes: ModeDetail[] = [
 	{
-		id: "studio",
-		title: "棚拍模式",
-		tagline: "专业编辑工具",
+		id: "instant",
+		title: "Instant Mode",
+		tagline: "Record & share in seconds",
 		description:
-			"本地全画质录制，然后使用内置编辑器添加背景、边距、光标效果等。",
-		icon: IconCapFilmCut,
+			"Your recording uploads as you capture. Stop recording and instantly get a shareable link — no waiting.",
+		icon: IconCapInstant,
 		features: [
-			"全画质本地录制",
-			"内置编辑器与效果",
-			"自定义背景与边距",
-			"随时导出或分享",
+			"Instant shareable link",
+			"Background uploading",
+			"AI transcription & summary",
+			"Browser-based playback",
 		],
 	},
 	{
-		id: "instant",
-		title: "即时模式",
-		tagline: "几秒完成录制与分享",
+		id: "studio",
+		title: "Studio Mode",
+		tagline: "Professional editing tools",
 		description:
-			"录制时同步上传。停止录制即可立即获得分享链接，无需等待。需要登录。",
-		icon: IconCapInstant,
+			"Record in full quality locally, then use the built-in editor to add backgrounds, padding, cursor effects, and more.",
+		icon: IconCapFilmCut,
 		features: [
-			"即时分享链接",
-			"后台上传",
-			"AI 转录与摘要",
-			"浏览器播放",
+			"Full quality local recording",
+			"Built-in editor & effects",
+			"Custom backgrounds & padding",
+			"Export or share when ready",
 		],
 	},
 	{
 		id: "screenshot",
-		title: "截图模式",
-		tagline: "即时捕获与美化",
+		title: "Screenshot Mode",
+		tagline: "Capture & beautify instantly",
 		description:
-			"一键快捷键截图，添加标注与精美背景，然后即时分享或复制。",
+			"Take screenshots with a single hotkey, add annotations and beautiful backgrounds, then share or copy instantly.",
 		icon: IconCapScreenshot,
 		features: [
-			"快捷键即时截图",
-			"标注与绘图工具",
-			"精美背景",
-			"复制、保存或分享",
+			"Instant hotkey capture",
+			"Annotation & drawing tools",
+			"Beautiful backgrounds",
+			"Copy, save, or share",
 		],
 	},
 ];
@@ -122,30 +122,31 @@ type SetupPermission = {
 
 const setupPermissions: readonly SetupPermission[] = [
 	{
-		name: "屏幕录制",
+		name: "Screen Recording",
 		key: "screenRecording",
 		description:
-			"点击「授权」并在 macOS 提示时允许，或在系统设置中选择 Cap。允许屏幕录制后需重启应用。",
+			"Click Grant to allow when macOS asks, or pick Cap in System Settings if needed. Restart the app after allowing screen recording.",
 		requiresManualGrant: false,
 	},
 	{
-		name: "辅助功能",
+		name: "Accessibility",
 		key: "accessibility",
 		description:
-			"录制期间，Cap 会在本地采集鼠标活动，以在片段中自动生成缩放。",
+			"During recording, Cap collects mouse activity locally to generate automatic zoom in segments.",
 		requiresManualGrant: false,
 	},
 	{
-		name: "麦克风",
+		name: "Microphone",
 		key: "microphone",
-		description: "录制 Cap 中的音频需要此权限。",
+		description: "This permission is required to record audio in your Caps.",
 		requiresManualGrant: false,
 		optional: true,
 	},
 	{
-		name: "摄像头",
+		name: "Camera",
 		key: "camera",
-		description: "在 Cap 中录制摄像头需要此权限。",
+		description:
+			"This permission is required to record your camera in your Caps.",
 		requiresManualGrant: false,
 		optional: true,
 	},
@@ -412,9 +413,9 @@ export default function OnboardingPage() {
 	});
 
 	const nextLabel = () => {
-		if (permissionsOnly()) return "继续使用 Cap";
-		if (step() === totalSteps() - 1) return "开始使用 Cap";
-		return "继续";
+		if (permissionsOnly()) return "Continue to Cap";
+		if (step() === totalSteps() - 1) return "Start Using Cap";
+		return "Continue";
 	};
 
 	const nextDisabled = () => isMacOS() && step() === 0 && !permsGranted();
@@ -588,7 +589,7 @@ function StepNavigation(props: {
 							class="flex items-center gap-1.5 text-[13px] text-gray-10 hover:text-gray-12 transition-colors duration-200"
 						>
 							<IconLucideArrowLeft class="size-3.5" />
-							返回
+							Back
 						</button>
 					</Show>
 				</div>
@@ -633,14 +634,14 @@ function StepNavigation(props: {
 								onClick={() => props.onSkip?.()}
 								class="text-[11px] text-gray-9 hover:text-gray-11 transition-colors duration-200 py-0.5"
 							>
-								跳过引导
+								Skip onboarding
 							</button>
 						</Show>
 					</div>
 				</div>
 			</div>
 			<span class="text-[10px] text-gray-8 tabular-nums">
-				按 Enter ↵ 或使用 ← → 方向键
+				Press Enter ↵ or use ← → arrow keys
 			</span>
 		</div>
 	);
@@ -696,10 +697,11 @@ function ModesOverviewStep(props: { active: boolean }) {
 				)}
 			>
 				<h2 class="text-2xl font-bold text-gray-12 tracking-tight">
-					一个应用，满足所有工作流
+					One app, every workflow
 				</h2>
 				<p class="text-[14px] text-gray-10 leading-relaxed">
-					无论你需要速度、棚拍画质，还是快速截图 — Cap 都有对应模式。
+					Whether you need speed, studio quality, or a quick screenshot — Cap
+					has a mode for it.
 				</p>
 			</div>
 
@@ -852,10 +854,10 @@ function ToggleStep(props: { active: boolean }) {
 				)}
 			>
 				<h2 class="text-2xl font-bold text-gray-12 tracking-tight">
-					随时切换模式
+					Switch modes anytime
 				</h2>
 				<p class="text-[14px] text-gray-10 leading-relaxed">
-					在主窗口中一键切换不同模式。
+					Toggle between modes with a single click from the main Cap window.
 				</p>
 			</div>
 
@@ -957,20 +959,20 @@ function ShortcutsStep(props: { active: boolean }) {
 
 	const settingsAreas = [
 		{
-			title: "键盘快捷键",
-			desc: "录制、截图和切换模式的全局快捷键",
+			title: "Keyboard Shortcuts",
+			desc: "Global hotkeys for recording, screenshots, and switching modes",
 		},
 		{
-			title: "自定义 S3 存储",
-			desc: "连接你自己的 S3 兼容存储桶，完全掌控录制文件",
+			title: "Custom S3 Storage",
+			desc: "Connect your own S3-compatible bucket for full control over your recordings",
 		},
 		{
-			title: "自定义域名",
-			desc: "使用自己的域名作为分享链接，而非 cap.so",
+			title: "Custom Domain",
+			desc: "Use your own domain for shareable links instead of cap.so",
 		},
 		{
-			title: "录制偏好",
-			desc: "帧率、画质、倒计时、光标效果等",
+			title: "Recording Preferences",
+			desc: "FPS, quality, countdown timer, cursor effects, and more",
 		},
 	];
 
@@ -986,10 +988,11 @@ function ShortcutsStep(props: { active: boolean }) {
 					<IconCapSettings class="size-5 text-gray-11" />
 				</div>
 				<h2 class="text-2xl font-bold text-gray-12 tracking-tight">
-					打造属于你的 Cap
+					Make Cap yours
 				</h2>
 				<p class="text-[14px] text-gray-10 leading-relaxed">
-					从快捷键到存储，一切皆可自定义。Cap 会适应你的工作流。
+					Customize everything from keyboard shortcuts to storage. Cap adapts to
+					your workflow.
 				</p>
 			</div>
 
@@ -1054,10 +1057,10 @@ function FaqStep(props: { active: boolean }) {
 				)}
 			>
 				<h2 class="text-2xl font-bold text-gray-12 tracking-tight">
-					常见问题
+					Frequently Asked Questions
 				</h2>
 				<p class="text-[14px] text-gray-10">
-					入门所需了解的一切。
+					Everything you need to know to get started.
 				</p>
 			</div>
 
@@ -1067,37 +1070,46 @@ function FaqStep(props: { active: boolean }) {
 					visible() ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
 				)}
 			>
-				<FaqItem question="Cap 免费吗？">
+				<FaqItem question="Is Cap free to use?">
 					<p class="text-[13px] text-gray-10 leading-relaxed">
-						Cap 个人使用免费。团队和商业用途请查看我们的{" "}
+						Cap is free for personal use. For teams and commercial use, check
+						out our{" "}
 						<button
 							type="button"
 							onClick={() => shell.open("https://cap.so/pricing")}
 							class="text-blue-10 hover:text-blue-11 underline underline-offset-2"
 						>
-							定价方案
+							pricing plans
 						</button>
-						。
+						.
 					</p>
 				</FaqItem>
-				<FaqItem question="即时模式和棚拍模式有什么区别？">
+				<FaqItem question="What's the difference between Instant and Studio?">
 					<p class="text-[13px] text-gray-10 leading-relaxed">
-						即时模式边录边传 — 停止录制即可立即获得分享链接。棚拍模式在本地全画质录制，可在分享前使用背景、效果等进行编辑。
+						Instant mode uploads as you record — stop recording and you'll have
+						a shareable link immediately. Studio mode records locally in full
+						quality, letting you edit with backgrounds, effects, and more before
+						sharing.
 					</p>
 				</FaqItem>
-				<FaqItem question="我的录制存储在哪里？">
+				<FaqItem question="Where are my recordings stored?">
 					<p class="text-[13px] text-gray-10 leading-relaxed">
-						所有录制都保存在本地电脑上。即时模式下也会上传到 Cap 云端以便分享。可在设置中管理存储。
+						All recordings are stored locally on your computer. In Instant mode,
+						they're also uploaded to Cap's cloud for easy sharing. You can
+						manage storage in Settings.
 					</p>
 				</FaqItem>
-				<FaqItem question="之后可以修改快捷键吗？">
+				<FaqItem question="Can I change my shortcuts later?">
 					<p class="text-[13px] text-gray-10 leading-relaxed">
-						随时前往设置 → 快捷键，自定义所有键盘快捷键。
+						Head to Settings → Shortcuts at any time to customize all your
+						keyboard shortcuts.
 					</p>
 				</FaqItem>
-				<FaqItem question="分享是如何工作的？">
+				<FaqItem question="How does sharing work?">
 					<p class="text-[13px] text-gray-10 leading-relaxed">
-						即时模式下，停止录制后会自动获得分享链接。棚拍模式下，导出编辑后的视频，通过 Cap 云端分享或本地保存。
+						In Instant mode, you get a shareable link automatically when you
+						stop recording. In Studio mode, export your edited video and share
+						via Cap's cloud or save locally.
 					</p>
 				</FaqItem>
 			</div>
@@ -1110,7 +1122,7 @@ function FaqStep(props: { active: boolean }) {
 					visible() ? "opacity-100" : "opacity-0",
 				)}
 			>
-				查看定价方案
+				View pricing plans
 				<IconLucideExternalLink class="size-3" />
 			</button>
 		</div>
@@ -1207,7 +1219,7 @@ function StartRecordingClickMock(props: {
 	});
 
 	const modeLabel = () =>
-		props.mode === "studio" ? "棚拍模式" : "即时模式";
+		props.mode === "studio" ? "Studio Mode" : "Instant Mode";
 
 	const cursorW = () => (ostype() === "windows" ? 24 : 22);
 	const cursorH = () => (ostype() === "windows" ? 34 : 32);
@@ -1230,7 +1242,7 @@ function StartRecordingClickMock(props: {
 						</Show>
 						<div class="mr-2 ml-3 flex min-w-0 flex-col">
 							<span class="text-[0.95rem] font-medium text-nowrap text-white">
-								开始录制
+								Start Recording
 							</span>
 							<span class="-mt-0.5 flex items-center gap-1 text-[11px] font-light text-nowrap text-white/90">
 								{modeLabel()}
@@ -1289,7 +1301,7 @@ function RecordingBar(props: {
 							fallback={
 								<div class="flex flex-row items-center gap-1.5 rounded-lg px-2 py-1 text-gray-10">
 									<div class="size-2 shrink-0 rounded-full bg-gray-8" />
-									<span class="text-[0.875rem] font-medium">已停止</span>
+									<span class="text-[0.875rem] font-medium">Stopped</span>
 								</div>
 							}
 						>
@@ -1373,7 +1385,7 @@ function InstantMockup(props: { active: boolean }) {
 	return (
 		<div class="w-full h-full flex flex-col min-h-0 p-4">
 			<MockupStepBar
-				steps={["录制", "停止", "分享链接"]}
+				steps={["Record", "Stop", "Share link"]}
 				activeStep={activeStep()}
 			/>
 			<div class="relative flex-1 min-h-[200px] w-full max-w-[420px] mx-auto">
@@ -1425,7 +1437,7 @@ function InstantMockup(props: { active: boolean }) {
 									<IconLucideCheck class="size-3 text-green-600" />
 								</div>
 								<span class="text-[12px] font-medium text-gray-12">
-									链接已可分享！
+									Link ready to share!
 								</span>
 							</div>
 							<div class="flex items-center gap-2 w-full">
@@ -1447,12 +1459,12 @@ function InstantMockup(props: { active: boolean }) {
 										fallback={
 											<>
 												<IconLucideCopy class="size-3" stroke-width={2} />
-												复制
+												Copy
 											</>
 										}
 									>
 										<IconLucideCheck class="size-3" />
-										已复制！
+										Copied!
 									</Show>
 								</div>
 							</div>
@@ -1502,7 +1514,7 @@ function StudioMockup(props: { active: boolean }) {
 	return (
 		<div class="w-full h-full flex flex-col min-h-0 p-4">
 			<MockupStepBar
-				steps={["录制", "编辑", "导出"]}
+				steps={["Record", "Edit", "Export"]}
 				activeStep={activeStep()}
 			/>
 			<div class="relative flex-1 w-full max-w-[420px] min-h-[248px] mx-auto flex items-center justify-center">
@@ -1559,7 +1571,7 @@ function StudioMockup(props: { active: boolean }) {
 								<div class="size-2 rounded-full bg-gray-6" />
 							</div>
 							<span class="text-[10px] text-gray-11 font-medium">
-								Cap 编辑器
+								Cap Editor
 							</span>
 						</div>
 						<div
@@ -1570,7 +1582,7 @@ function StudioMockup(props: { active: boolean }) {
 									: "scale-100 ring-0 ring-offset-0",
 							)}
 						>
-							导出
+							Export
 						</div>
 					</div>
 
@@ -1608,11 +1620,11 @@ function StudioMockup(props: { active: boolean }) {
 							)}
 						>
 							<div class="text-[8px] text-gray-9 font-medium uppercase tracking-wider">
-								样式
+								Style
 							</div>
 							<div class="h-5 rounded-sm border border-gray-3 bg-white dark:bg-gray-2" />
 							<div class="text-[8px] text-gray-9 font-medium uppercase tracking-wider mt-1">
-								背景
+								Background
 							</div>
 							<div class="flex gap-1">
 								<div class="size-4 rounded-full bg-linear-to-br from-blue-400 to-purple-500 border border-gray-3" />
@@ -1632,13 +1644,13 @@ function StudioMockup(props: { active: boolean }) {
 													<IconLucideCheck class="size-3.5 text-green-600" />
 												</div>
 												<span class="text-sm font-medium text-gray-12">
-													导出完成！
+													Export complete!
 												</span>
 											</div>
 										}
 									>
 										<span class="text-sm font-medium text-gray-12">
-											正在导出…
+											Exporting...
 										</span>
 									</Show>
 									<div class="w-full h-2 bg-gray-4 rounded-full overflow-hidden">
@@ -1909,10 +1921,10 @@ function StartupOverlay(props: {
 						/>
 					</div>
 					<h1 class="text-5xl md:text-5xl font-bold mb-4 mt-8 drop-shadow-[0_0_20px_rgba(0,0,0,0.2)]">
-						欢迎使用 Cap
+						Welcome to Cap
 					</h1>
 					<p class="text-xl md:text-2xl opacity-80 mx-auto drop-shadow-[0_0_20px_rgba(0,0,0,0.2)] whitespace-nowrap">
-						精美的屏幕录制，数据由你掌控。
+						Beautiful screen recordings, owned by you.
 					</p>
 				</div>
 
@@ -1922,11 +1934,11 @@ function StartupOverlay(props: {
 					size="lg"
 					onClick={handleGetStarted}
 				>
-					<span>开始使用</span>
+					<span>Get Started</span>
 					<span class="text-[11px] font-normal text-[rgba(22,27,38,0.58)] leading-tight inline-flex items-center justify-center gap-1">
-						<span>点击此处，或按</span>
+						<span>Click here, or press</span>
 						<kbd class="rounded border border-gray-6 bg-white dark:bg-gray-3 px-1 py-px text-[10px] font-medium text-gray-11 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
-							空格
+							Space
 						</kbd>
 					</span>
 				</Button>
@@ -1987,13 +1999,13 @@ function PermissionsStep(props: {
 	const maybePromptRestartForPermission = async (permission: OSPermission) => {
 		const message =
 			permission === "accessibility"
-				? "在系统设置中为 Cap 启用辅助功能后，macOS 可能仍显示为未授权，直到你重启应用。"
-				: "在系统设置中添加 Cap 后，需要重启应用才能使权限生效。";
+				? "After enabling Accessibility for Cap in System Settings, macOS may keep showing it as denied until you restart the app."
+				: "After adding Cap in System Settings, you'll need to restart the app for the permission to take effect.";
 		const shouldRestart = await ask(message, {
-			title: "需要重启",
+			title: "Restart Required",
 			kind: "info",
-			okLabel: "重启，我已授权",
-			cancelLabel: "暂不，我还需要添加",
+			okLabel: "Restart, I've granted permission",
+			cancelLabel: "No, I still need to add it",
 		});
 		if (shouldRestart) {
 			await relaunch();
@@ -2060,10 +2072,10 @@ function PermissionsStep(props: {
 					<IconLucideShield class="size-5 text-gray-11" />
 				</div>
 				<h2 class="text-2xl font-bold text-gray-12 tracking-tight">
-					需要权限
+					Permissions Required
 				</h2>
 				<p class="text-[14px] text-gray-10 leading-relaxed">
-					Cap 需要一些权限来录制屏幕和采集音频。
+					Cap needs a few permissions to record your screen and capture audio.
 				</p>
 			</div>
 
@@ -2095,7 +2107,7 @@ function PermissionsStep(props: {
 											</span>
 											<Show when={permission.optional}>
 												<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-2 dark:bg-gray-4 text-gray-9">
-													可选
+													Optional
 												</span>
 											</Show>
 										</div>
@@ -2108,7 +2120,7 @@ function PermissionsStep(props: {
 										fallback={
 											<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-3 border border-green-5 text-green-11 text-[12px] font-medium shrink-0">
 												<IconLucideCheck class="size-3" />
-												已授权
+												Granted
 											</div>
 										}
 									>
@@ -2127,8 +2139,8 @@ function PermissionsStep(props: {
 										>
 											{permission.requiresManualGrant ||
 											permStatus() === "denied"
-												? "打开设置"
-												: "授权"}
+												? "Open Settings"
+												: "Grant"}
 										</Button>
 									</Show>
 								</div>
@@ -2160,7 +2172,7 @@ function ScreenshotMockup(props: { active: boolean }) {
 	return (
 		<div class="w-full h-full flex flex-col items-center justify-center p-4">
 			<MockupStepBar
-				steps={["选择区域", "美化", "复制"]}
+				steps={["Select area", "Beautify", "Copy"]}
 				activeStep={activeStep()}
 			/>
 			<div class="relative w-full max-w-[420px] h-[240px]">
@@ -2304,11 +2316,11 @@ function ScreenshotMockup(props: { active: boolean }) {
 							<div class="flex flex-1 flex-row items-center justify-end gap-1.5">
 								<div class="flex items-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-3 border border-gray-4 text-[9px] text-gray-11 font-medium">
 									<IconLucideCopy class="size-3 shrink-0" stroke-width={2} />
-									复制
+									Copy
 								</div>
 								<div class="flex items-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-gray-3 border border-gray-4 text-[9px] text-gray-11 font-medium">
 									<IconLucideSave class="size-3 shrink-0" stroke-width={2} />
-									保存
+									Save
 								</div>
 							</div>
 						</div>
@@ -2362,7 +2374,7 @@ function ScreenshotMockup(props: { active: boolean }) {
 						>
 							<div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-12 text-gray-1 text-[10px] font-medium">
 								<IconLucideCheck class="size-3" />
-								已复制到剪贴板
+								Copied to clipboard
 							</div>
 						</div>
 					</div>

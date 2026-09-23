@@ -47,17 +47,17 @@ type Recording = {
 const Tabs = [
 	{
 		id: "all",
-		label: "全部",
+		label: "Show all",
 	},
 	{
 		id: "instant",
 		icon: <IconCapInstant class="invert size-3 dark:invert-0" />,
-		label: "即时",
+		label: "Instant",
 	},
 	{
 		id: "studio",
 		icon: <IconCapFilmCut class="invert size-3 dark:invert-0" />,
-		label: "棚拍",
+		label: "Studio",
 	},
 ] satisfies { id: string; label: string; icon?: JSX.Element }[];
 
@@ -160,13 +160,9 @@ export default function Recordings() {
 
 	const emptyMessage = createMemo(() => {
 		const tabLabel =
-			activeTab() === "all"
-				? "录制"
-				: activeTab() === "instant"
-					? "即时录制"
-					: "棚拍录制";
-		const prefix = trimmedSearch() ? "没有匹配的" : "暂无";
-		return `${prefix}${tabLabel}`;
+			activeTab() === "all" ? "recordings" : `${activeTab()} recordings`;
+		const prefix = trimmedSearch() ? "No matching" : "No";
+		return `${prefix} ${tabLabel}`;
 	});
 
 	const handleRecordingClick = (recording: Recording) => {
@@ -206,8 +202,8 @@ export default function Recordings() {
 		<div class="cap-settings-page flex relative flex-col w-full h-full custom-scroll">
 			<SettingsPageContent class="max-w-none space-y-4">
 				<Section
-					title="录制"
-					description="管理你的录制并执行操作。"
+					title="Recordings"
+					description="Manage your recordings and perform actions."
 					right={
 						<Button
 							variant="gray"
@@ -216,7 +212,7 @@ export default function Recordings() {
 							onClick={handleVideoImport}
 						>
 							<IconLucideImport class="size-3.5" />
-							<span>导入</span>
+							<span>Import</span>
 						</Button>
 					}
 				>
@@ -224,7 +220,7 @@ export default function Recordings() {
 						when={recordings.data && recordings.data.length > 0}
 						fallback={
 							<p class="text-center text-(--text-tertiary) absolute flex items-center justify-center w-full h-full">
-								未找到录制
+								No recordings found
 							</p>
 						}
 					>
@@ -260,12 +256,12 @@ export default function Recordings() {
 											setSearch("");
 										}
 									}}
-									placeholder="搜索"
+									placeholder="Search"
 									autoCapitalize="off"
 									autocorrect="off"
 									autocomplete="off"
 									spellcheck={false}
-									aria-label="搜索录制"
+									aria-label="Search recordings"
 								/>
 							</div>
 						</div>
@@ -312,7 +308,7 @@ export default function Recordings() {
 											)
 										}
 									>
-										加载更多
+										Load more
 									</Button>
 								</div>
 							</Show>
@@ -334,7 +330,8 @@ function RecordingItem(props: {
 }) {
 	const [imageExists, setImageExists] = createSignal(true);
 	const mode = () => props.recording.meta.mode;
-	const modeLabel = () => (mode() === "instant" ? "即时" : "棚拍");
+	const firstLetterUpperCase = () =>
+		mode().charAt(0).toUpperCase() + mode().slice(1);
 
 	const queryClient = useQueryClient();
 	const studioCompleteCheck = () =>
@@ -359,7 +356,7 @@ function RecordingItem(props: {
 				>
 					<img
 						class="object-cover rounded-sm size-12"
-						alt="录制缩略图"
+						alt="Recording thumbnail"
 						src={`${convertFileSrc(
 							props.recording.thumbnailPath,
 						)}?t=${Date.now()}`}
@@ -380,12 +377,12 @@ function RecordingItem(props: {
 							) : (
 								<IconCapFilmCut class="invert size-2.5 dark:invert-0" />
 							)}
-							<p>{modeLabel()}</p>
+							<p>{firstLetterUpperCase()}</p>
 						</div>
 
 						<Show when={props.recording.meta.clip_count > 1}>
 							<div class="px-2 py-0.5 flex items-center font-medium text-[11px] text-gray-12 rounded-full w-fit bg-gray-4">
-								<p>{props.recording.meta.clip_count} 个片段</p>
+								<p>{props.recording.meta.clip_count} clips</p>
 							</div>
 						</Show>
 
@@ -396,7 +393,7 @@ function RecordingItem(props: {
 								)}
 							>
 								<IconPhRecordFill class="invert size-2.5 dark:invert-0" />
-								<p>录制中</p>
+								<p>Recording in progress</p>
 							</div>
 						</Show>
 
@@ -416,7 +413,7 @@ function RecordingItem(props: {
 									)}
 								>
 									<IconPhWarningBold class="invert size-2.5 dark:invert-0" />
-									<p>录制失败</p>
+									<p>Recording failed</p>
 								</div>
 							</CapTooltip>
 						</Show>
@@ -437,7 +434,7 @@ function RecordingItem(props: {
 					<Show when={props.recording.meta.sharing}>
 						{(sharing) => (
 							<TooltipIconButton
-								tooltipText="打开链接"
+								tooltipText="Open link"
 								onClick={() => shell.open(sharing().link)}
 							>
 								<IconCapLink class="size-4" />
@@ -445,14 +442,14 @@ function RecordingItem(props: {
 						)}
 					</Show>
 					<TooltipIconButton
-						tooltipText="编辑"
+						tooltipText="Edit"
 						onClick={async () => {
 							if (
 								props.recording.meta.status.status === "Failed" &&
 								!(await confirm(
-									"录制失败，此文件在编辑器中可能存在问题！若恢复文件时遇到问题，请联系支持！",
+									"The recording failed so this file may have issues in the editor! If your having issues recovering the file please reach out to support!",
 									{
-										title: "录制可能已损坏",
+										title: "Recording is potentially corrupted",
 										kind: "warning",
 									},
 								))
@@ -483,7 +480,7 @@ function RecordingItem(props: {
 									when={props.uploadProgress || reupload.isPending}
 									fallback={
 										<TooltipIconButton
-											tooltipText="重新上传"
+											tooltipText="Reupload"
 											onClick={() => reupload.mutate()}
 										>
 											<IconLucideRotateCcw class="size-4" />
@@ -500,7 +497,7 @@ function RecordingItem(props: {
 								<Show when={props.recording.meta.sharing}>
 									{(sharing) => (
 										<TooltipIconButton
-											tooltipText="打开链接"
+											tooltipText="Open link"
 											onClick={() => shell.open(sharing().link)}
 										>
 											<IconCapLink class="size-4" />
@@ -512,7 +509,7 @@ function RecordingItem(props: {
 					}}
 				</Show>
 				<TooltipIconButton
-					tooltipText="打开录制包"
+					tooltipText="Open recording bundle"
 					onClick={() => {
 						props.onOpenFolder();
 					}}
@@ -520,9 +517,9 @@ function RecordingItem(props: {
 					<IconLucideFolder class="size-4" />
 				</TooltipIconButton>
 				<TooltipIconButton
-					tooltipText="删除"
+					tooltipText="Delete"
 					onClick={async () => {
-						if (!(await ask("确定要删除此录制吗？")))
+						if (!(await ask("Are you sure you want to delete this recording?")))
 							return;
 						await remove(props.recording.path, { recursive: true });
 

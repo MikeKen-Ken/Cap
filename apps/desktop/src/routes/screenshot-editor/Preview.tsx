@@ -475,7 +475,7 @@ export function Preview(props: { zoom: number; setZoom: (z: number) => void }) {
 			>
 				<div class="absolute left-4 bottom-4 z-10 flex items-center gap-2 bg-gray-1 dark:bg-gray-3 rounded-lg shadow-xs p-1 border border-gray-4">
 					<EditorButton
-						tooltipText="缩小"
+						tooltipText="Zoom Out"
 						kbd={["meta", "-"]}
 						onClick={zoomOut}
 					>
@@ -491,7 +491,7 @@ export function Preview(props: { zoom: number; setZoom: (z: number) => void }) {
 						formatTooltip={(v) => `${Math.round(v * 100)}%`}
 					/>
 					<EditorButton
-						tooltipText="放大"
+						tooltipText="Zoom In"
 						kbd={["meta", "+"]}
 						onClick={zoomIn}
 					>
@@ -500,7 +500,7 @@ export function Preview(props: { zoom: number; setZoom: (z: number) => void }) {
 				</div>
 				<Show
 					when={!!latestFrame()}
-					fallback={<div class="text-gray-11">正在加载预览...</div>}
+					fallback={<div class="text-gray-11">Loading preview...</div>}
 				>
 					{(_) => {
 						createEffect(

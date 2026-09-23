@@ -92,8 +92,8 @@ export default function Screenshots() {
 	);
 
 	const emptyMessage = createMemo(() => {
-		const prefix = trimmedSearch() ? "没有匹配的" : "暂无";
-		return `${prefix}截图`;
+		const prefix = trimmedSearch() ? "No matching" : "No";
+		return `${prefix} screenshots`;
 	});
 
 	const handleScreenshotClick = (screenshot: Screenshot) => {
@@ -140,11 +140,11 @@ export default function Screenshots() {
 					toast.loading(screenshotShareStatusText(status), { id: toastId });
 				}
 			});
-			toast.success("分享链接已复制到剪贴板", { id: toastId });
+			toast.success("Share link copied to clipboard", { id: toastId });
 		} catch (error) {
 			console.error("Failed to create screenshot share link:", error);
 			const message = error instanceof Error ? error.message : String(error);
-			toast.error(message || "创建分享链接失败", { id: toastId });
+			toast.error(message || "Failed to create share link", { id: toastId });
 		} finally {
 			setSharingPath(null);
 			setShareStatus("idle");
@@ -164,8 +164,8 @@ export default function Screenshots() {
 		<div class="cap-settings-page flex relative flex-col w-full h-full custom-scroll">
 			<SettingsPageContent class="max-w-none space-y-4">
 				<Section
-					title="截图"
-					description="管理你的截图并执行操作。"
+					title="Screenshots"
+					description="Manage your screenshots and perform actions."
 					right={
 						<Button
 							variant="gray"
@@ -174,7 +174,7 @@ export default function Screenshots() {
 							onClick={handleImportImage}
 						>
 							<IconLucideImport class="size-3.5" />
-							<span>导入图片</span>
+							<span>Import image</span>
 						</Button>
 					}
 				>
@@ -183,7 +183,7 @@ export default function Screenshots() {
 						fallback={
 							<div class="flex flex-1 items-center justify-center">
 								<p class="text-center text-(--text-tertiary)">
-									未找到截图
+									No screenshots found
 								</p>
 							</div>
 						}
@@ -202,12 +202,12 @@ export default function Screenshots() {
 											setSearch("");
 										}
 									}}
-									placeholder="搜索"
+									placeholder="Search"
 									autoCapitalize="off"
 									autocorrect="off"
 									autocomplete="off"
 									spellcheck={false}
-									aria-label="搜索截图"
+									aria-label="Search screenshots"
 								/>
 							</div>
 						</div>
@@ -256,7 +256,7 @@ export default function Screenshots() {
 											)
 										}
 									>
-										加载更多
+										Load more
 									</Button>
 								</div>
 							</Show>
@@ -293,7 +293,7 @@ function ScreenshotItem(props: {
 				>
 					<img
 						class="object-cover rounded-sm size-12"
-						alt="截图缩略图"
+						alt="Screenshot thumbnail"
 						src={convertFileSrc(props.screenshot.path)}
 						onError={() => setImageExists(false)}
 					/>
@@ -304,21 +304,21 @@ function ScreenshotItem(props: {
 			</div>
 			<div class="flex gap-2 items-center">
 				<TooltipIconButton
-					tooltipText="打开文件夹"
+					tooltipText="Open folder"
 					onClick={props.onOpenFolder}
 				>
 					<IconLucideFolder class="size-4" />
 				</TooltipIconButton>
 
 				<TooltipIconButton
-					tooltipText="在编辑器中打开"
+					tooltipText="Open in editor"
 					onClick={props.onOpenEditor}
 				>
 					<IconLucideEdit class="size-4" />
 				</TooltipIconButton>
 
 				<TooltipIconButton
-					tooltipText="复制图片"
+					tooltipText="Copy image"
 					onClick={props.onCopyImageToClipboard}
 				>
 					<IconLucideCopy class="size-4" />
@@ -333,10 +333,10 @@ function ScreenshotItem(props: {
 				</TooltipIconButton>
 
 				<TooltipIconButton
-					tooltipText="删除"
+					tooltipText="Delete"
 					onClick={async () => {
 						if (
-							!(await ask("确定要删除此截图吗？"))
+							!(await ask("Are you sure you want to delete this screenshot?"))
 						)
 							return;
 						const parent = props.screenshot.path.replace(/[/\\][^/\\]+$/, "");

@@ -44,7 +44,7 @@ export function AnnotationConfigBar() {
 					>
 						<div class="flex items-center justify-center gap-6 px-4 h-11">
 							<Show when={!isMask()}>
-								<ConfigItem label={type() === "text" ? "颜色" : "描边"}>
+								<ConfigItem label={type() === "text" ? "Color" : "Stroke"}>
 									<ColorPickerButton
 										value={ann().strokeColor}
 										onChange={(c) => update("strokeColor", c)}
@@ -54,7 +54,7 @@ export function AnnotationConfigBar() {
 
 							<Show when={type() !== "text" && !isMask()}>
 								<ConfigItem
-									label="宽度"
+									label="Width"
 									value={`${Math.round(ann().strokeWidth)}px`}
 								>
 									<Slider
@@ -69,7 +69,7 @@ export function AnnotationConfigBar() {
 							</Show>
 
 							<Show when={type() === "rectangle" || type() === "circle"}>
-								<ConfigItem label="填充">
+								<ConfigItem label="Fill">
 									<ColorPickerButton
 										value={ann().fillColor}
 										onChange={(c) => update("fillColor", c)}
@@ -80,7 +80,7 @@ export function AnnotationConfigBar() {
 
 							<Show when={!isMask()}>
 								<ConfigItem
-									label="不透明度"
+									label="Opacity"
 									value={`${Math.round(ann().opacity * 100)}%`}
 								>
 									<Slider
@@ -95,7 +95,7 @@ export function AnnotationConfigBar() {
 							</Show>
 
 							<Show when={type() === "mask"}>
-								<ConfigItem label="样式">
+								<ConfigItem label="Style">
 									<div class="flex gap-1">
 										<button
 											type="button"
@@ -107,7 +107,7 @@ export function AnnotationConfigBar() {
 											)}
 											onClick={() => update("maskType", "blur")}
 										>
-											模糊
+											Blur
 										</button>
 										<button
 											type="button"
@@ -119,7 +119,7 @@ export function AnnotationConfigBar() {
 											)}
 											onClick={() => update("maskType", "pixelate")}
 										>
-											像素化
+											Pixelate
 										</button>
 									</div>
 								</ConfigItem>
@@ -127,7 +127,7 @@ export function AnnotationConfigBar() {
 
 							<Show when={type() === "mask"}>
 								<ConfigItem
-									label="强度"
+									label="Intensity"
 									value={`${Math.round(maskLevel())}`}
 								>
 									<Slider
@@ -143,7 +143,7 @@ export function AnnotationConfigBar() {
 
 							<Show when={type() === "text"}>
 								<ConfigItem
-									label="大小"
+									label="Size"
 									value={`${Math.round(ann().height)}px`}
 								>
 									<Slider
@@ -164,7 +164,7 @@ export function AnnotationConfigBar() {
 								class="text-xs text-blue-11 font-medium hover:text-blue-9 transition-colors"
 								onClick={() => setSelectedAnnotationId(null)}
 							>
-								完成
+								Done
 							</button>
 						</div>
 					</div>
@@ -235,7 +235,7 @@ function ColorPickerButton(props: {
 
 						<div class="grid grid-cols-6 gap-1.5">
 							<Show when={props.allowTransparent}>
-								<Tooltip content="透明">
+								<Tooltip content="Transparent">
 									<button
 										type="button"
 										onClick={() => props.onChange("transparent")}

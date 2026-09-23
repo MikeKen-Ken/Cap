@@ -10,7 +10,7 @@ use tracing::{info, warn};
 use crate::general_settings::GeneralSettingsStore;
 
 const UPDATE_ENDPOINT: &str =
-    "https://cdn.crabnebula.app/update/cap/cap/{{target}}/{{current_version}}";
+    "https://github.com/MikeKen-Ken/Cap/releases/latest/download/latest.json";
 
 const FIRST_CHECK_DELAY: Duration = Duration::from_secs(60);
 const CHECK_INTERVAL: Duration = Duration::from_secs(2 * 60 * 60);
@@ -67,7 +67,7 @@ fn current_channel(app: &AppHandle) -> UpdateChannel {
 }
 
 // Mirrors `updaterTarget()` in src/utils/updater.ts; the plugin's built-in
-// target reports "macos"/"linux" while CrabNebula releases are keyed on
+// target reports "macos"/"linux" while our release artifacts are keyed on
 // "darwin-*" / "linux-*-deb".
 fn updater_target() -> String {
     let arch = if cfg!(target_arch = "aarch64") {

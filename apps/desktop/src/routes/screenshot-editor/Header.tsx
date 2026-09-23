@@ -96,13 +96,13 @@ export function Header() {
 	const shareTooltip = () => {
 		switch (exportStatus()) {
 			case "rendering":
-				return "正在渲染截图";
+				return "Rendering screenshot";
 			case "encoding":
-				return "正在准备上传";
+				return "Preparing upload";
 			case "uploading":
-				return "正在上传截图";
+				return "Uploading screenshot";
 			default:
-				return "创建分享链接";
+				return "Create shareable link";
 		}
 	};
 
@@ -119,7 +119,7 @@ export function Header() {
 			<div class="flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
 				<AspectRatioSelect />
 				<EditorButton
-					tooltipText="裁剪图片"
+					tooltipText="Crop Image"
 					onClick={cropDialogHandler}
 					disabled={isCropDisabled()}
 					leftIcon={<IconCapCrop class="size-4" />}
@@ -146,13 +146,13 @@ export function Header() {
 					onClick={() => {
 						exportImage("clipboard");
 					}}
-					tooltipText="复制到剪贴板"
+					tooltipText="Copy to Clipboard"
 					disabled={isExporting()}
 					leftIcon={<IconLucideCopy class="w-4" />}
 				/>
 
 				<EditorButton
-					tooltipText="保存"
+					tooltipText="Save"
 					onClick={() => exportImage("file")}
 					disabled={isExporting()}
 					leftIcon={<IconLucideSave class="size-4" />}
@@ -168,7 +168,7 @@ export function Header() {
 				<DropdownMenu gutter={8} placement="bottom-end">
 					<EditorButton<typeof DropdownMenu.Trigger>
 						as={DropdownMenu.Trigger}
-						tooltipText="更多操作"
+						tooltipText="More Actions"
 						leftIcon={<IconLucideMoreHorizontal class="size-4" />}
 						disabled={isExporting()}
 					/>
@@ -188,13 +188,13 @@ export function Header() {
 										}}
 									>
 										<IconLucideFolder class="size-4 text-gray-11" />
-										<span>打开文件夹</span>
+										<span>Open Folder</span>
 									</DropdownItem>
 									<DropdownItem
 										onSelect={async () => {
 											if (
 												await ask(
-													"确定要删除这张截图吗？",
+													"Are you sure you want to delete this screenshot?",
 												)
 											) {
 												await remove(path());
@@ -203,7 +203,7 @@ export function Header() {
 										}}
 									>
 										<IconCapTrash class="size-4 text-gray-11" />
-										<span>删除</span>
+										<span>Delete</span>
 									</DropdownItem>
 								</MenuItemList>
 							</PopperContent>

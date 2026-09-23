@@ -127,11 +127,11 @@ export function KeyboardTab(props: {
 
 	return (
 		<Field
-			name="显示键盘"
+			name="Show keyboard"
 			value={
 				<Toggle checked={getSetting("enabled")} onChange={setKeyboardVisible} />
 			}
-			badge="测试版"
+			badge="Beta"
 		>
 			<div class="flex flex-col gap-4">
 				<div
@@ -140,10 +140,10 @@ export function KeyboardTab(props: {
 						!getSetting("enabled") && "opacity-50 pointer-events-none",
 					)}
 				>
-					<Field name="字体设置" icon={<IconLucideKeyboard />}>
+					<Field name="Font Settings" icon={<IconLucideKeyboard />}>
 						<div class="space-y-3">
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">字体</span>
+								<span class="text-gray-11 text-sm">Font Family</span>
 								<KSelect<string>
 									options={FONT_OPTIONS.map((f) => f.value)}
 									value={getSetting("font")}
@@ -193,7 +193,7 @@ export function KeyboardTab(props: {
 							</div>
 
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">大小</span>
+								<span class="text-gray-11 text-sm">Size</span>
 								<Slider
 									value={[getSetting("size")]}
 									onChange={(v) => updateSetting("size", v[0])}
@@ -204,7 +204,7 @@ export function KeyboardTab(props: {
 							</div>
 
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">文字颜色</span>
+								<span class="text-gray-11 text-sm">Text Color</span>
 								<HexColorInput
 									value={getSetting("color")}
 									brandColorSwatches={props.brandColorSwatches}
@@ -214,10 +214,10 @@ export function KeyboardTab(props: {
 						</div>
 					</Field>
 
-					<Field name="背景设置" icon={<IconLucideKeyboard />}>
+					<Field name="Background Settings" icon={<IconLucideKeyboard />}>
 						<div class="space-y-3">
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">背景颜色</span>
+								<span class="text-gray-11 text-sm">Background Color</span>
 								<HexColorInput
 									value={getSetting("backgroundColor")}
 									brandColorSwatches={props.brandColorSwatches}
@@ -226,7 +226,7 @@ export function KeyboardTab(props: {
 							</div>
 
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">背景不透明度</span>
+								<span class="text-gray-11 text-sm">Background Opacity</span>
 								<Slider
 									value={[getSetting("backgroundOpacity")]}
 									onChange={(v) => updateSetting("backgroundOpacity", v[0])}
@@ -238,7 +238,7 @@ export function KeyboardTab(props: {
 						</div>
 					</Field>
 
-					<Field name="位置" icon={<IconLucideKeyboard />}>
+					<Field name="Position" icon={<IconLucideKeyboard />}>
 						<KSelect<string>
 							options={KEYBOARD_POSITION_OPTIONS.map((p) => p.value)}
 							value={getSetting("position")}
@@ -288,13 +288,13 @@ export function KeyboardTab(props: {
 						</KSelect>
 					</Field>
 
-					<Field name="字重" icon={<IconLucideKeyboard />}>
+					<Field name="Font Weight" icon={<IconLucideKeyboard />}>
 						<KSelect
 							options={TEXT_WEIGHT_OPTIONS}
 							optionValue="value"
 							optionTextValue="label"
 							value={{
-								label: "自定义",
+								label: "Custom",
 								value: getSetting("fontWeight"),
 							}}
 							onChange={(value) => {
@@ -343,10 +343,10 @@ export function KeyboardTab(props: {
 						</KSelect>
 					</Field>
 
-					<Field name="动画" icon={<IconLucideKeyboard />}>
+					<Field name="Animation" icon={<IconLucideKeyboard />}>
 						<div class="space-y-3">
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">淡入淡出时长</span>
+								<span class="text-gray-11 text-sm">Fade Duration</span>
 								<Slider
 									value={[getSetting("fadeDuration") * 100]}
 									onChange={(v) => updateSetting("fadeDuration", v[0] / 100)}
@@ -360,7 +360,7 @@ export function KeyboardTab(props: {
 							</div>
 
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">停留时长</span>
+								<span class="text-gray-11 text-sm">Linger Duration</span>
 								<Slider
 									value={[getSetting("lingerDuration") * 100]}
 									onChange={(v) => updateSetting("lingerDuration", v[0] / 100)}
@@ -374,7 +374,7 @@ export function KeyboardTab(props: {
 							</div>
 
 							<div class="flex flex-col gap-2">
-								<span class="text-gray-11 text-sm">分组阈值</span>
+								<span class="text-gray-11 text-sm">Grouping Threshold</span>
 								<Slider
 									value={[getSetting("groupingThresholdMs")]}
 									onChange={(v) => updateSetting("groupingThresholdMs", v[0])}
@@ -389,11 +389,11 @@ export function KeyboardTab(props: {
 						</div>
 					</Field>
 
-					<Field name="行为" icon={<IconLucideKeyboard />}>
+					<Field name="Behavior" icon={<IconLucideKeyboard />}>
 						<div class="space-y-3">
 							<div class="flex flex-col gap-2">
 								<div class="flex items-center justify-between">
-									<span class="text-gray-11 text-sm">显示修饰键</span>
+									<span class="text-gray-11 text-sm">Show Modifier Keys</span>
 									<Toggle
 										checked={getSetting("showModifiers")}
 										onChange={(checked) =>
@@ -405,7 +405,7 @@ export function KeyboardTab(props: {
 
 							<div class="flex flex-col gap-2">
 								<div class="flex items-center justify-between">
-									<span class="text-gray-11 text-sm">显示特殊键</span>
+									<span class="text-gray-11 text-sm">Show Special Keys</span>
 									<Toggle
 										checked={getSetting("showSpecialKeys")}
 										onChange={(checked) =>
@@ -417,7 +417,7 @@ export function KeyboardTab(props: {
 
 							<div class="flex flex-col gap-2">
 								<div class="flex items-center justify-between">
-									<span class="text-gray-11 text-sm">大写</span>
+									<span class="text-gray-11 text-sm">Uppercase</span>
 									<Toggle
 										checked={getSetting("uppercase")}
 										onChange={(checked) => updateSetting("uppercase", checked)}
@@ -434,21 +434,21 @@ export function KeyboardTab(props: {
 							class="w-full"
 						>
 							{isGenerating()
-								? "生成中..."
+								? "Generating..."
 								: hasKeyboardSegments()
-									? "重新生成键盘片段"
-									: "生成键盘片段"}
+									? "Regenerate Keyboard Segments"
+									: "Generate Keyboard Segments"}
 						</Button>
 					</div>
 
 					<Show when={selectedSegment()}>
 						{(seg) => (
 							<Field
-								name="所选片段覆盖"
+								name="Selected Segment Override"
 								icon={<IconLucideKeyboard />}
 							>
 								<div class="space-y-3">
-									<Subfield name="开始时间">
+									<Subfield name="Start Time">
 										<Input
 											type="number"
 											value={seg().start.toFixed(2)}
@@ -465,7 +465,7 @@ export function KeyboardTab(props: {
 											}
 										/>
 									</Subfield>
-									<Subfield name="结束时间">
+									<Subfield name="End Time">
 										<Input
 											type="number"
 											value={seg().end.toFixed(2)}
@@ -482,7 +482,7 @@ export function KeyboardTab(props: {
 											}
 										/>
 									</Subfield>
-									<Subfield name="显示文本">
+									<Subfield name="Display Text">
 										<Input
 											type="text"
 											value={seg().displayText}
@@ -497,7 +497,7 @@ export function KeyboardTab(props: {
 											}
 										/>
 									</Subfield>
-									<Subfield name="淡入淡出时长覆盖">
+									<Subfield name="Fade Duration Override">
 										<Slider
 											value={[
 												(seg().fadeDurationOverride ??
@@ -517,7 +517,7 @@ export function KeyboardTab(props: {
 											step={1}
 										/>
 									</Subfield>
-									<Subfield name="大写">
+									<Subfield name="Uppercase">
 										<Toggle
 											checked={
 												seg().uppercaseOverride ?? getSetting("uppercase")
@@ -540,9 +540,10 @@ export function KeyboardTab(props: {
 
 					<Show when={!hasKeyboardSegments()}>
 						<div class="text-center text-sm text-gray-11 py-4">
-							<p>还没有键盘片段。</p>
+							<p>No keyboard segments yet.</p>
 							<p class="text-xs mt-1 text-gray-10">
-								点击「生成键盘片段」，根据录制的按键创建片段。
+								Click "Generate Keyboard Segments" to create segments from
+								recorded keyboard presses.
 							</p>
 						</div>
 					</Show>

@@ -27,7 +27,7 @@ import InfoPill from "./InfoPill";
 import TargetSelectInfoPill from "./TargetSelectInfoPill";
 import useRequestPermission from "./useRequestPermission";
 
-const NO_CAMERA = "无摄像头";
+const NO_CAMERA = "No Camera";
 
 export default function CameraSelect(props: {
 	disabled?: boolean;
@@ -98,7 +98,7 @@ export default function CameraSelect(props: {
 	const label = () =>
 		props.value?.display_name ??
 		(hasSelection() ? props.selectedLabel : null) ??
-		(hasSelection() ? "摄像头" : NO_CAMERA);
+		(hasSelection() ? "Camera" : NO_CAMERA);
 
 	const showHiddenIndicator = () =>
 		props.value !== null &&
@@ -135,8 +135,8 @@ export default function CameraSelect(props: {
 							onClick={openCameraWindow}
 							onPointerDown={(e) => e.stopPropagation()}
 							class={DEVICE_SHORTCUT_BUTTON_CLASS}
-							title="显示摄像头预览"
-							aria-label="显示摄像头预览"
+							title="Show camera preview"
+							aria-label="Show camera preview"
 						>
 							<IconLucideEyeOff class="size-3.5" />
 						</button>
@@ -151,8 +151,8 @@ export default function CameraSelect(props: {
 							}}
 							onPointerDown={(e) => e.stopPropagation()}
 							class={DEVICE_SHORTCUT_BUTTON_CLASS}
-							title="摄像头设置"
-							aria-label="摄像头设置"
+							title="Camera settings"
+							aria-label="Camera settings"
 						>
 							<IconLucideSettings class="size-3.5" />
 						</button>
@@ -305,7 +305,7 @@ export function CameraSelectBase(props: {
 							onClick={openCameraWindow}
 							onPointerDown={(e) => e.stopPropagation()}
 							class="flex items-center justify-center px-2 py-1 rounded-full bg-gray-6 text-gray-11 hover:bg-gray-7 transition-colors"
-							title="显示摄像头预览"
+							title="Show camera preview"
 						>
 							<IconLucideEyeOff class="size-3.5" />
 						</button>

@@ -46,7 +46,7 @@ export function SystemAudioToggleRoot(
 		!!currentRecording.data || systemAudioSupported.data === false;
 	const tooltipMessage = () => {
 		if (systemAudioSupported.data === false) {
-			return "系统音频采集需要 macOS 13.0 或更高版本";
+			return "System audio capture requires macOS 13.0 or later";
 		}
 		return undefined;
 	};
@@ -66,15 +66,15 @@ export function SystemAudioToggleRoot(
 			{props.icon}
 			<p class={DEVICE_ROW_LABEL_CLASS}>
 				{rawOptions.captureSystemAudio
-					? "录制系统音频"
-					: "不录制系统音频"}
+					? "Record System Audio"
+					: "No System Audio"}
 			</p>
 			<div class={DEVICE_ROW_TRAILING_CLASS}>
 				<Dynamic
 					component={props.PillComponent}
 					variant={rawOptions.captureSystemAudio ? "blue" : "gray"}
 				>
-					{rawOptions.captureSystemAudio ? "开" : "关"}
+					{rawOptions.captureSystemAudio ? "On" : "Off"}
 				</Dynamic>
 			</div>
 		</button>

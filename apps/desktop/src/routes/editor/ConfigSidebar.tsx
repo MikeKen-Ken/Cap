@@ -153,12 +153,12 @@ const CaptionsTab = lazy(() =>
 type BackgroundSourceTab = BackgroundSource["type"] | "desktop" | "none";
 
 const BACKGROUND_SOURCES = {
-	desktop: "桌面",
-	wallpaper: "壁纸",
-	image: "图片",
-	color: "颜色",
-	gradient: "渐变",
-	none: "无",
+	desktop: "Desktop",
+	wallpaper: "Wallpaper",
+	image: "Image",
+	color: "Color",
+	gradient: "Gradient",
+	none: "None",
 } satisfies Record<BackgroundSourceTab, string>;
 
 const BACKGROUND_ICONS = {
@@ -276,9 +276,9 @@ const CURRENT_DESKTOP_BACKGROUND_ID = "current-desktop-background";
 const CURRENT_DESKTOP_BACKGROUND_BASENAME = "current-desktop-background";
 const getCurrentDesktopBackgroundLabel = () => {
 	const os = ostype();
-	if (os === "macos") return "此 Mac";
-	if (os === "windows") return "此电脑";
-	return "此设备";
+	if (os === "macos") return "This Mac";
+	if (os === "windows") return "This PC";
+	return "This device";
 };
 
 type WallpaperOption = {
@@ -299,18 +299,18 @@ const isCurrentDesktopBackgroundPath = (path: string | null | undefined) => {
 };
 
 const STEREO_MODES = [
-	{ name: "立体声", value: "stereo" },
-	{ name: "单声道 L", value: "monoL" },
-	{ name: "单声道 R", value: "monoR" },
+	{ name: "Stereo", value: "stereo" },
+	{ name: "Mono L", value: "monoL" },
+	{ name: "Mono R", value: "monoR" },
 ] satisfies Array<{ name: string; value: StereoMode }>;
 
 const CAMERA_SHAPES = [
 	{
-		name: "正方形",
+		name: "Square",
 		value: "square",
 	},
 	{
-		name: "原始比例",
+		name: "Source",
 		value: "source",
 	},
 ] satisfies Array<{ name: string; value: CameraShape }>;
@@ -323,17 +323,17 @@ const CAMERA_X_POSITIONS = [
 const CAMERA_Y_POSITIONS = ["top", "bottom"] satisfies CameraYPosition[];
 
 const CORNER_STYLE_OPTIONS = [
-	{ name: "超椭圆", value: "squircle" },
-	{ name: "圆角", value: "rounded" },
+	{ name: "Squircle", value: "squircle" },
+	{ name: "Rounded", value: "rounded" },
 ] satisfies Array<{ name: string; value: CornerRoundingType }>;
 
 const BACKGROUND_THEMES = {
 	macOS: "macOS",
-	dark: "深色",
-	blue: "蓝色",
-	cities: "城市",
-	purple: "紫色",
-	orange: "橙色",
+	dark: "Dark",
+	blue: "Blue",
+	cities: "Cities",
+	purple: "Purple",
+	orange: "Orange",
 };
 
 type CursorPresetValues = {
@@ -347,45 +347,45 @@ const DEFAULT_MOTION_BLUR = 1.0;
 const CURSOR_TYPE_OPTIONS = [
 	{
 		value: "auto" as CursorType,
-		label: "自动",
-		description: "使用录制中的实际光标。",
+		label: "Auto",
+		description: "Uses the actual cursor from your recording.",
 	},
 	{
 		value: "circle" as CursorType,
-		label: "圆形",
-		description: "类似手机模拟器的触控圆形光标。",
+		label: "Circle",
+		description: "A touch-style circle cursor like mobile simulators.",
 	},
 ];
 
 const CURSOR_ANIMATION_STYLE_OPTIONS = [
 	{
 		value: "slow",
-		label: "缓慢",
-		description: "轻松缓动，跟随柔和，惯性较高。",
+		label: "Slow",
+		description: "Relaxed easing with a gentle follow and higher inertia.",
 		preset: { tension: 200, mass: 2.25, friction: 40 },
 	},
 	{
 		value: "smooth",
-		label: "平滑",
-		description: "高阻尼的超平滑电影感。",
+		label: "Smooth",
+		description: "Ultra-smooth cinematic feel with high damping.",
 		preset: { tension: 80, mass: 2.5, friction: 28 },
 	},
 	{
 		value: "mellow",
-		label: "柔和",
-		description: "适合日常教程与演示的平衡平滑。",
+		label: "Mellow",
+		description: "Balanced smoothing for everyday tutorials and walkthroughs.",
 		preset: { tension: 470, mass: 3, friction: 70 },
 	},
 	{
 		value: "fast",
-		label: "快速",
-		description: "适合快节奏内容的快速响应平滑。",
+		label: "Fast",
+		description: "Quick, responsive smoothing for fast-paced content.",
 		preset: { tension: 380, mass: 1.0, friction: 30 },
 	},
 	{
 		value: "custom",
-		label: "自定义",
-		description: "手动调节张力、摩擦和质量以完全控制。",
+		label: "Custom",
+		description: "Tune tension, friction, and mass manually for full control.",
 	},
 ] satisfies Array<{
 	value: CursorAnimationStyle;
@@ -613,17 +613,17 @@ export function ConfigSidebar() {
 					class="flex flex-col flex-1 gap-6 p-4 min-h-0"
 				>
 					<Field
-						name="音频控制"
+						name="Audio Controls"
 						icon={<IconLucideVolume2 class="size-4" />}
 					>
-						<Subfield name="静音">
+						<Subfield name="Mute Audio">
 							<Toggle
 								checked={project.audio.mute}
 								onChange={(v) => setProject("audio", "mute", v)}
 							/>
 						</Subfield>
 						{editorInstance.recordings.segments[0].mic?.channels === 2 && (
-							<Subfield name="麦克风立体声模式">
+							<Subfield name="Microphone Stereo Mode">
 								<KSelect<{ name: string; value: StereoMode }>
 									options={STEREO_MODES}
 									optionValue="value"
@@ -692,7 +692,7 @@ export function ConfigSidebar() {
 					</Field>
 					{meta().hasMicrophone && (
 						<Field
-							name="麦克风音量"
+							name="Microphone Volume"
 							icon={<IconCapMicrophone class="size-4" />}
 						>
 							<Slider
@@ -703,14 +703,14 @@ export function ConfigSidebar() {
 								maxValue={10}
 								step={0.1}
 								formatTooltip={(v) =>
-									v <= -30 ? "已静音" : `${v > 0 ? "+" : ""}${v.toFixed(1)} dB`
+									v <= -30 ? "Muted" : `${v > 0 ? "+" : ""}${v.toFixed(1)} dB`
 								}
 							/>
 						</Field>
 					)}
 					{meta().hasSystemAudio && (
 						<Field
-							name="系统音频音量"
+							name="System Audio Volume"
 							icon={<IconLucideMonitor class="size-4" />}
 						>
 							<Slider
@@ -721,7 +721,7 @@ export function ConfigSidebar() {
 								maxValue={10}
 								step={0.1}
 								formatTooltip={(v) =>
-									v <= -30 ? "已静音" : `${v > 0 ? "+" : ""}${v.toFixed(1)} dB`
+									v <= -30 ? "Muted" : `${v > 0 ? "+" : ""}${v.toFixed(1)} dB`
 								}
 							/>
 						</Field>
@@ -732,7 +732,7 @@ export function ConfigSidebar() {
 					class="flex flex-col flex-1 gap-6 p-4 min-h-0"
 				>
 					<Field
-						name="显示光标"
+						name="Show cursor"
 						value={
 							<Toggle
 								checked={!project.cursor.hide}
@@ -743,7 +743,7 @@ export function ConfigSidebar() {
 						}
 					/>
 					<Show when={!project.cursor.hide}>
-						<Field name="光标类型" icon={<IconCapCursor />}>
+						<Field name="Cursor Type" icon={<IconCapCursor />}>
 							<RadioGroup
 								class="flex flex-col gap-2"
 								value={project.cursor.type}
@@ -772,7 +772,7 @@ export function ConfigSidebar() {
 								))}
 							</RadioGroup>
 						</Field>
-						<Field name="大小" icon={<IconCapEnlarge />}>
+						<Field name="Size" icon={<IconCapEnlarge />}>
 							<Slider
 								value={[project.cursor.size]}
 								onChange={(v) => setProject("cursor", "size", v[0])}
@@ -781,7 +781,7 @@ export function ConfigSidebar() {
 								step={1}
 							/>
 						</Field>
-						<Field name="倾斜" icon={<IconLucideRotate3d class="size-4" />}>
+						<Field name="Tilt" icon={<IconLucideRotate3d class="size-4" />}>
 							<Slider
 								value={[project.cursor.rotationAmount ?? 0.15]}
 								onChange={(v) => setProject("cursor", "rotationAmount", v[0])}
@@ -792,7 +792,7 @@ export function ConfigSidebar() {
 							/>
 						</Field>
 						<Field
-							name="空闲时隐藏"
+							name="Hide When Idle"
 							icon={<IconLucideTimer class="size-4" />}
 							value={
 								<Toggle
@@ -804,7 +804,7 @@ export function ConfigSidebar() {
 							}
 						/>
 						<Show when={project.cursor.hideWhenIdle}>
-							<Subfield name="空闲延迟" class="gap-4 items-center">
+							<Subfield name="Inactivity Delay" class="gap-4 items-center">
 								<div class="flex flex-1 gap-3 items-center">
 									<Slider
 										class="flex-1"
@@ -825,7 +825,7 @@ export function ConfigSidebar() {
 							</Subfield>
 						</Show>
 						<Field
-							name="光标移动样式"
+							name="Cursor Movement Style"
 							icon={<IconLucideRabbit class="size-4" />}
 						>
 							<RadioGroup
@@ -858,7 +858,7 @@ export function ConfigSidebar() {
 						</Field>
 						<KCollapsible open={!project.cursor.raw}>
 							<Field
-								name="平滑移动"
+								name="Smooth Movement"
 								icon={<IconHugeiconsEaseCurveControlPoints />}
 								value={
 									<Toggle
@@ -872,7 +872,7 @@ export function ConfigSidebar() {
 							<KCollapsible.Content class="overflow-hidden border-b opacity-0 transition-opacity border-gray-3 animate-collapsible-up data-expanded:animate-collapsible-down data-expanded:opacity-100">
 								{/* if Content has padding or margin the animation doesn't look as good */}
 								<div class="flex flex-col gap-4 pt-4 pb-6">
-									<Field name="张力">
+									<Field name="Tension">
 										<Slider
 											value={[project.cursor.tension]}
 											onChange={(v) => setCursorPhysics("tension", v[0])}
@@ -881,7 +881,7 @@ export function ConfigSidebar() {
 											step={1}
 										/>
 									</Field>
-									<Field name="摩擦">
+									<Field name="Friction">
 										<Slider
 											value={[project.cursor.friction]}
 											onChange={(v) => setCursorPhysics("friction", v[0])}
@@ -890,7 +890,7 @@ export function ConfigSidebar() {
 											step={0.1}
 										/>
 									</Field>
-									<Field name="质量">
+									<Field name="Mass">
 										<Slider
 											value={[project.cursor.mass]}
 											onChange={(v) => setCursorPhysics("mass", v[0])}
@@ -903,7 +903,7 @@ export function ConfigSidebar() {
 							</KCollapsible.Content>
 						</KCollapsible>
 						<Field
-							name="高质量 SVG 光标"
+							name="High Quality SVG Cursors"
 							icon={<IconLucideSparkles />}
 							value={
 								<Toggle
@@ -963,9 +963,9 @@ export function ConfigSidebar() {
           </Field> */}
 				</KTabs.Content>
 				<KTabs.Content value="hotkeys" class="flex flex-1 p-4 min-h-0">
-					<Field name="快捷键" icon={<IconCapHotkeys />}>
+					<Field name="Hotkeys" icon={<IconCapHotkeys />}>
 						<ComingSoonTooltip>
-							<Subfield name="显示快捷键">
+							<Subfield name="Show hotkeys">
 								<Toggle disabled />
 							</Subfield>
 						</ComingSoonTooltip>
@@ -1082,10 +1082,14 @@ export function ConfigSidebar() {
 													}
 													leftIcon={<IconLucideCheck />}
 												>
-													完成
+													Done
 												</EditorButton>
 												<span class="text-sm text-gray-10">
-													{value().segments.length} 条字幕已选
+													{value().segments.length} caption{" "}
+													{value().segments.length === 1
+														? "segment"
+														: "segments"}{" "}
+													selected
 												</span>
 											</div>
 											<EditorButton
@@ -1097,7 +1101,7 @@ export function ConfigSidebar() {
 												}
 												leftIcon={<IconCapTrash />}
 											>
-												删除
+												Delete
 											</EditorButton>
 										</div>
 										<For each={value().segments}>
@@ -1151,10 +1155,14 @@ export function ConfigSidebar() {
 													}}
 													leftIcon={<IconLucideCheck />}
 												>
-													完成
+													Done
 												</EditorButton>
 												<span class="text-sm text-gray-10">
-													{value().segments.length} 条键盘已选
+													{value().segments.length} keyboard{" "}
+													{value().segments.length === 1
+														? "segment"
+														: "segments"}{" "}
+													selected
 												</span>
 											</div>
 											<EditorButton
@@ -1166,7 +1174,7 @@ export function ConfigSidebar() {
 												}
 												leftIcon={<IconCapTrash />}
 											>
-												删除
+												Delete
 											</EditorButton>
 										</div>
 										<For each={value().segments}>
@@ -1214,10 +1222,14 @@ export function ConfigSidebar() {
 													}
 													leftIcon={<IconLucideCheck />}
 												>
-													完成
+													Done
 												</EditorButton>
 												<span class="text-sm text-gray-10">
-													{value().segments.length} 条文本已选
+													{value().segments.length} text{" "}
+													{value().segments.length === 1
+														? "segment"
+														: "segments"}{" "}
+													selected
 												</span>
 											</div>
 											<EditorButton
@@ -1229,7 +1241,7 @@ export function ConfigSidebar() {
 												}
 												leftIcon={<IconCapTrash />}
 											>
-												删除
+												Delete
 											</EditorButton>
 										</div>
 										<For each={value().segments}>
@@ -1282,10 +1294,14 @@ export function ConfigSidebar() {
 													}
 													leftIcon={<IconLucideCheck />}
 												>
-													完成
+													Done
 												</EditorButton>
 												<span class="text-sm text-gray-10">
-													{value().segments.length} 条音频已选
+													{value().segments.length} audio{" "}
+													{value().segments.length === 1
+														? "segment"
+														: "segments"}{" "}
+													selected
 												</span>
 											</div>
 											<EditorButton
@@ -1297,7 +1313,7 @@ export function ConfigSidebar() {
 												}
 												leftIcon={<IconCapTrash />}
 											>
-												删除
+												Delete
 											</EditorButton>
 										</div>
 										<For each={value().segments}>
@@ -1345,10 +1361,14 @@ export function ConfigSidebar() {
 													}
 													leftIcon={<IconLucideCheck />}
 												>
-													完成
+													Done
 												</EditorButton>
 												<span class="text-sm text-gray-10">
-													{value().segments.length} 条遮罩已选
+													{value().segments.length} mask{" "}
+													{value().segments.length === 1
+														? "segment"
+														: "segments"}{" "}
+													selected
 												</span>
 											</div>
 											<EditorButton
@@ -1360,7 +1380,7 @@ export function ConfigSidebar() {
 												}
 												leftIcon={<IconCapTrash />}
 											>
-												删除
+												Delete
 											</EditorButton>
 										</div>
 										<For each={value().segments}>
@@ -1408,10 +1428,14 @@ export function ConfigSidebar() {
 													}
 													leftIcon={<IconLucideCheck />}
 												>
-													完成
+													Done
 												</EditorButton>
 												<span class="text-sm text-gray-10">
-													{value().segments.length} 条缩放已选
+													{value().segments.length} zoom{" "}
+													{value().segments.length === 1
+														? "segment"
+														: "segments"}{" "}
+													selected
 												</span>
 											</div>
 											<EditorButton
@@ -1423,7 +1447,7 @@ export function ConfigSidebar() {
 												}}
 												leftIcon={<IconCapTrash />}
 											>
-												删除
+												Delete
 											</EditorButton>
 										</div>
 										<Show
@@ -1497,10 +1521,14 @@ export function ConfigSidebar() {
 																}
 																leftIcon={<IconLucideCheck />}
 															>
-																完成
+																Done
 															</EditorButton>
 															<span class="text-sm text-gray-10">
-																{value().segments.length} 条场景已选
+																{value().segments.length} scene{" "}
+																{value().segments.length === 1
+																	? "segment"
+																	: "segments"}{" "}
+																selected
 															</span>
 														</div>
 														<EditorButton
@@ -1517,7 +1545,7 @@ export function ConfigSidebar() {
 															}}
 															leftIcon={<IconCapTrash />}
 														>
-															删除
+															Delete
 														</EditorButton>
 													</div>
 												</div>
@@ -1566,10 +1594,14 @@ export function ConfigSidebar() {
 																}
 																leftIcon={<IconLucideCheck />}
 															>
-																完成
+																Done
 															</EditorButton>
 															<span class="text-sm text-gray-10">
-																{value().segments.length} 条片段已选
+																{value().segments.length} clip{" "}
+																{value().segments.length === 1
+																	? "segment"
+																	: "segments"}{" "}
+																selected
 															</span>
 														</div>
 														<EditorButton
@@ -1586,7 +1618,7 @@ export function ConfigSidebar() {
 															}}
 															leftIcon={<IconCapTrash />}
 														>
-															删除
+															Delete
 														</EditorButton>
 													</div>
 												</div>
@@ -1785,7 +1817,7 @@ function BackgroundConfig(props: {
 
 								setWallpaperSource(rawPath);
 							} catch (_err) {
-								toast.error("设置壁纸失败");
+								toast.error("Failed to set wallpaper");
 							}
 						};
 
@@ -1881,7 +1913,7 @@ function BackgroundConfig(props: {
 				ensureBackgroundPresentation(addingFromBlankBackground);
 			});
 		} catch (_err) {
-			toast.error("无法导入桌面壁纸");
+			toast.error("Couldn't import your desktop wallpaper");
 		} finally {
 			setImportingDesktopBackground(false);
 		}
@@ -2019,7 +2051,7 @@ function BackgroundConfig(props: {
 
 	return (
 		<KTabs.Content value={TAB_IDS.background} class="flex flex-col gap-6 p-4">
-			<Field icon={<IconCapImage class="size-4" />} name="背景图片">
+			<Field icon={<IconCapImage class="size-4" />} name="Background Image">
 				<KTabs
 					value={backgroundSourceTab()}
 					onChange={(v) => {
@@ -2123,7 +2155,7 @@ function BackgroundConfig(props: {
 								<div class="flex flex-col gap-3 items-center justify-center p-6 w-full rounded-lg border border-dashed bg-gray-2 border-gray-5">
 									<IconLucideMonitor class="size-6 text-gray-11" />
 									<span class="text-[13px] text-center text-gray-12">
-										使用你桌面的壁纸
+										Use the wallpaper from your desktop
 									</span>
 									<EditorButton
 										onClick={importDesktopBackground}
@@ -2131,8 +2163,8 @@ function BackgroundConfig(props: {
 										leftIcon={<IconLucideMonitor />}
 									>
 										{importingDesktopBackground()
-											? "导入中..."
-											: "导入桌面背景"}
+											? "Importing..."
+											: "Import desktop background"}
 									</EditorButton>
 								</div>
 							}
@@ -2170,8 +2202,8 @@ function BackgroundConfig(props: {
 											leftIcon={<IconLucideMonitor />}
 										>
 											{importingDesktopBackground()
-												? "导入中..."
-												: "重新导入"}
+												? "Importing..."
+												: "Re-import"}
 										</EditorButton>
 									</div>
 								</div>
@@ -2237,7 +2269,7 @@ function BackgroundConfig(props: {
 
 									ensureBackgroundPresentation();
 								} catch (_err) {
-									toast.error("设置壁纸失败");
+									toast.error("Failed to set wallpaper");
 								}
 							}}
 							class="grid grid-cols-7 gap-2 h-auto"
@@ -2248,7 +2280,7 @@ function BackgroundConfig(props: {
 									<div class="flex col-span-7 justify-center items-center h-32 text-gray-11">
 										<div class="flex flex-col gap-2 items-center">
 											<div class="w-6 h-6 rounded-full border-2 animate-spin border-gray-5 border-t-blue-400" />
-											<span>正在加载壁纸...</span>
+											<span>Loading wallpapers...</span>
 										</div>
 									</div>
 								}
@@ -2265,7 +2297,7 @@ function BackgroundConfig(props: {
 													src={photo.url}
 													loading="eager"
 													class="object-cover w-full h-full"
-													alt="壁纸选项"
+													alt="Wallpaper option"
 												/>
 											</KRadioGroup.ItemControl>
 										</KRadioGroup.Item>
@@ -2284,7 +2316,7 @@ function BackgroundConfig(props: {
 														<KRadioGroup.ItemControl class="overflow-hidden w-full h-full rounded-lg border border-gray-5 data-checked:border-blue-9 data-checked:ring-2 data-checked:ring-blue-9 peer-focus-visible:border-2 peer-focus-visible:border-blue-9">
 															<img
 																src={photo.url}
-																alt="壁纸选项"
+																alt="Wallpaper option"
 																class="object-cover w-full h-full"
 																loading="lazy"
 															/>
@@ -2312,7 +2344,7 @@ function BackgroundConfig(props: {
 								>
 									<IconCapImage class="text-gray-11 size-6" />
 									<span class="text-gray-12">
-										点击选择或拖放图片
+										Click to select or drag and drop image
 									</span>
 								</button>
 							}
@@ -2322,7 +2354,7 @@ function BackgroundConfig(props: {
 									<img
 										src={convertFileSrc(source())}
 										class="object-cover w-full h-full"
-										alt="已选背景"
+										alt="Selected background"
 									/>
 									<div class="absolute top-2 right-2">
 										<button
@@ -2352,7 +2384,7 @@ function BackgroundConfig(props: {
 
 								const extension = getValidBackgroundImageExtension(file);
 								if (!extension) {
-									toast.error("无效的图片文件类型");
+									toast.error("Invalid image file type");
 									return;
 								}
 
@@ -2372,7 +2404,7 @@ function BackgroundConfig(props: {
 										path: fullPath,
 									});
 								} catch (_err) {
-									toast.error("保存图片失败");
+									toast.error("Failed to save image");
 								}
 							}}
 						/>
@@ -2468,7 +2500,7 @@ function BackgroundConfig(props: {
 				</KTabs>
 			</Field>
 
-			<Field name="背景模糊" icon={<IconCapBgBlur />}>
+			<Field name="Background Blur" icon={<IconCapBgBlur />}>
 				<Slider
 					value={[project.background.blur]}
 					onChange={(v) => setProject("background", "blur", v[0])}
@@ -2480,7 +2512,7 @@ function BackgroundConfig(props: {
 			</Field>
 			{/** Dashed divider */}
 			<div class="w-full border-t border-gray-300 border-dashed" />
-			<Field name="内边距" icon={<IconCapPadding class="size-4" />}>
+			<Field name="Padding" icon={<IconCapPadding class="size-4" />}>
 				<Slider
 					value={[project.background.padding]}
 					onChange={(v) => setBackgroundDimension("padding", v[0])}
@@ -2492,17 +2524,17 @@ function BackgroundConfig(props: {
 				<Show when={project.background.displayPosition}>
 					<div class="flex justify-between items-center mt-3">
 						<span class="text-xs text-gray-11">
-							自定义屏幕位置（在画布上拖动）
+							Custom screen position (dragged on canvas)
 						</span>
 						<EditorButton
 							onClick={() => setProject("background", "displayPosition", null)}
 						>
-							重置
+							Reset
 						</EditorButton>
 					</div>
 				</Show>
 			</Field>
-			<Field name="圆角" icon={<IconCapCorners class="size-4" />}>
+			<Field name="Rounded Corners" icon={<IconCapCorners class="size-4" />}>
 				<div class="flex flex-col gap-3">
 					<Slider
 						value={[project.background.rounding]}
@@ -2513,7 +2545,7 @@ function BackgroundConfig(props: {
 						formatTooltip="%"
 					/>
 					<CornerStyleSelect
-						label="圆角样式"
+						label="Corner Style"
 						value={project.background.roundingType}
 						onChange={(value) =>
 							setProject("background", "roundingType", value)
@@ -2521,7 +2553,7 @@ function BackgroundConfig(props: {
 					/>
 				</div>
 			</Field>
-			<Field name="运动模糊" icon={<IconLucideWind class="size-4" />}>
+			<Field name="Motion Blur" icon={<IconLucideWind class="size-4" />}>
 				<Slider
 					value={[
 						project.screenMotionBlur ??
@@ -2542,7 +2574,7 @@ function BackgroundConfig(props: {
 				/>
 			</Field>
 			<Field
-				name="边框"
+				name="Border"
 				icon={<IconCapSettings class="size-4" />}
 				value={
 					<Toggle
@@ -2577,7 +2609,7 @@ function BackgroundConfig(props: {
 			<KCollapsible open={project.background.border?.enabled ?? false}>
 				<KCollapsible.Content class="overflow-hidden opacity-0 transition-opacity animate-collapsible-up data-expanded:animate-collapsible-down data-expanded:opacity-100">
 					<div class="flex flex-col gap-6 pb-6">
-						<Field name="边框宽度" icon={<IconCapEnlarge class="size-4" />}>
+						<Field name="Border Width" icon={<IconCapEnlarge class="size-4" />}>
 							<Slider
 								value={[project.background.border?.width ?? 5.0]}
 								onChange={(v) =>
@@ -2597,7 +2629,7 @@ function BackgroundConfig(props: {
 								formatTooltip="px"
 							/>
 						</Field>
-						<Field name="边框颜色" icon={<IconCapImage class="size-4" />}>
+						<Field name="Border Color" icon={<IconCapImage class="size-4" />}>
 							<div class="flex flex-col gap-2">
 								<RgbInput
 									value={project.background.border?.color ?? [0, 0, 0]}
@@ -2620,7 +2652,7 @@ function BackgroundConfig(props: {
 							</div>
 						</Field>
 						<Field
-							name="边框不透明度"
+							name="Border Opacity"
 							icon={<IconCapShadow class="size-4" />}
 						>
 							<Slider
@@ -2645,7 +2677,7 @@ function BackgroundConfig(props: {
 					</div>
 				</KCollapsible.Content>
 			</KCollapsible>
-			<Field name="阴影" icon={<IconCapShadow class="size-4" />}>
+			<Field name="Shadow" icon={<IconCapShadow class="size-4" />}>
 				<Slider
 					value={[project.background.shadow ?? 0]}
 					onChange={(v) => {
@@ -2740,10 +2772,10 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 			value={TAB_IDS.camera}
 			class="flex flex-col flex-1 gap-6 p-4 min-h-0"
 		>
-			<Field icon={<IconCapCamera class="size-4" />} name="摄像头">
+			<Field icon={<IconCapCamera class="size-4" />} name="Camera">
 				<div class="flex flex-col gap-6">
 					<div>
-						<Subfield name="位置" />
+						<Subfield name="Position" />
 						<KRadioGroup
 							value={cameraPositionValue()}
 							onChange={(v) => {
@@ -2803,48 +2835,48 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 						<Show when={project.camera.manualPosition}>
 							<div class="flex justify-between items-center mt-3">
 								<span class="text-xs text-gray-11">
-									自定义位置（在画布上拖动）
+									Custom position (dragged on canvas)
 								</span>
 								<EditorButton
 									onClick={() => setProject("camera", "manualPosition", null)}
 								>
-									重置
+									Reset
 								</EditorButton>
 							</div>
 						</Show>
 					</div>
-					<Subfield name="隐藏摄像头">
+					<Subfield name="Hide Camera">
 						<Toggle
 							checked={project.camera.hide}
 							onChange={(hide) => setProject("camera", "hide", hide)}
 						/>
 					</Subfield>
-					<Subfield name="镜像摄像头">
+					<Subfield name="Mirror Camera">
 						<Toggle
 							checked={project.camera.mirror}
 							onChange={(mirror) => setProject("camera", "mirror", mirror)}
 						/>
 					</Subfield>
-					<Subfield name="背景模糊">
+					<Subfield name="Background Blur">
 						<KSelect<{ name: string; value: BackgroundBlurMode }>
 							options={[
-								{ name: "关闭", value: "off" },
-								{ name: "轻度模糊", value: "light" },
-								{ name: "重度模糊", value: "heavy" },
+								{ name: "Off", value: "off" },
+								{ name: "Light Blur", value: "light" },
+								{ name: "Heavy Blur", value: "heavy" },
 							]}
 							optionValue="value"
 							optionTextValue="name"
 							value={
 								(
 									[
-										{ name: "关闭", value: "off" },
-										{ name: "轻度模糊", value: "light" },
-										{ name: "重度模糊", value: "heavy" },
+										{ name: "Off", value: "off" },
+										{ name: "Light Blur", value: "light" },
+										{ name: "Heavy Blur", value: "heavy" },
 									] as const
 								).find(
 									(v) =>
 										v.value === (project.camera.backgroundBlur?.mode ?? "off"),
-								) ?? { name: "关闭", value: "off" }
+								) ?? { name: "Off", value: "off" }
 							}
 							onChange={(v) => {
 								if (v)
@@ -2893,7 +2925,7 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 							</KSelect.Portal>
 						</KSelect>
 					</Subfield>
-					<Subfield name="形状">
+					<Subfield name="Shape">
 						<KSelect<{ name: string; value: CameraShape }>
 							options={CAMERA_SHAPES}
 							optionValue="value"
@@ -2956,7 +2988,7 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 			</Field>
 			{/** Dashed divider */}
 			<div class="w-full border-t border-dashed border-gray-5" />
-			<Field name="大小" icon={<IconCapEnlarge class="size-4" />}>
+			<Field name="Size" icon={<IconCapEnlarge class="size-4" />}>
 				<Slider
 					value={[project.camera.size]}
 					onChange={(v) => setProject("camera", "size", v[0])}
@@ -2966,7 +2998,7 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 					formatTooltip="%"
 				/>
 			</Field>
-			<Field name="缩放时大小" icon={<IconCapEnlarge class="size-4" />}>
+			<Field name="Size During Zoom" icon={<IconCapEnlarge class="size-4" />}>
 				<Slider
 					value={[project.camera.zoomSize ?? 60]}
 					onChange={(v) => setProject("camera", "zoomSize", v[0])}
@@ -2976,7 +3008,7 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 					formatTooltip="%"
 				/>
 			</Field>
-			<Subfield name="缩放时保持原始大小">
+			<Subfield name="Keep original size during zoom">
 				<Toggle
 					checked={
 						(project.camera.scaleDuringZoom ??
@@ -2991,7 +3023,7 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 					}
 				/>
 			</Subfield>
-			<Field name="圆角" icon={<IconCapCorners class="size-4" />}>
+			<Field name="Rounded Corners" icon={<IconCapCorners class="size-4" />}>
 				<div class="flex flex-col gap-3">
 					<Slider
 						value={[project.camera.rounding ?? 0]}
@@ -3002,13 +3034,13 @@ function CameraConfig(props: { scrollRef: HTMLDivElement }) {
 						formatTooltip="%"
 					/>
 					<CornerStyleSelect
-						label="圆角样式"
+						label="Corner Style"
 						value={project.camera.roundingType}
 						onChange={(value) => setProject("camera", "roundingType", value)}
 					/>
 				</div>
 			</Field>
-			<Field name="阴影" icon={<IconCapShadow class="size-4" />}>
+			<Field name="Shadow" icon={<IconCapShadow class="size-4" />}>
 				<div class="space-y-8">
 					<Slider
 						value={[project.camera.shadow ?? 0]}
@@ -3237,7 +3269,7 @@ function TextSegmentConfig(props: {
 	return (
 		<div class="space-y-4">
 			<Field
-				name={`文本 ${props.segmentIndex + 1}`}
+				name={`Text ${props.segmentIndex + 1}`}
 				icon={<IconLucideType class="size-4" />}
 			>
 				<div class="flex items-center gap-3">
@@ -3251,7 +3283,7 @@ function TextSegmentConfig(props: {
 						}
 					/>
 					<div class="flex flex-col items-center gap-2">
-						<span class="text-xs text-gray-11">启用</span>
+						<span class="text-xs text-gray-11">Enabled</span>
 						<Toggle
 							checked={props.segment.enabled}
 							onChange={(value) =>
@@ -3263,7 +3295,7 @@ function TextSegmentConfig(props: {
 					</div>
 				</div>
 			</Field>
-			<Field name="大小" icon={<IconCapEnlarge class="size-4" />}>
+			<Field name="Size" icon={<IconCapEnlarge class="size-4" />}>
 				<Slider
 					value={[
 						clampNumber(
@@ -3301,18 +3333,18 @@ function TextSegmentConfig(props: {
 					step={1}
 				/>
 			</Field>
-			<Field name="样式" icon={<IconLucideSparkles class="size-4" />}>
+			<Field name="Style" icon={<IconLucideSparkles class="size-4" />}>
 				<div class="flex flex-col gap-2">
 					<KSelect
 						options={[
-							{ label: "常规", value: 400 },
-							{ label: "中等", value: 500 },
-							{ label: "粗体", value: 700 },
+							{ label: "Normal", value: 400 },
+							{ label: "Medium", value: 500 },
+							{ label: "Bold", value: 700 },
 						]}
 						optionValue="value"
 						optionTextValue="label"
 						value={{
-							label: "自定义",
+							label: "Custom",
 							value: props.segment.fontWeight,
 						}}
 						onChange={(value) => {
@@ -3342,13 +3374,13 @@ function TextSegmentConfig(props: {
 									if (selected) return selected.label;
 									const weight = props.segment.fontWeight;
 									const option = [
-										{ label: "常规", value: 400 },
-										{ label: "中等", value: 500 },
-										{ label: "粗体", value: 700 },
+										{ label: "Normal", value: 400 },
+										{ label: "Medium", value: 500 },
+										{ label: "Bold", value: 700 },
 									].find((o) => o.value === weight);
 									if (option) return option.label;
-									if (weight != null) return `自定义 (${weight})`;
-									return "常规";
+									if (weight != null) return `Custom (${weight})`;
+									return "Normal";
 								}}
 							</KSelect.Value>
 							<KSelect.Icon>
@@ -3369,7 +3401,7 @@ function TextSegmentConfig(props: {
 					</KSelect>
 
 					<div class="flex items-center justify-between pt-1">
-						<span class="text-xs text-gray-11">斜体</span>
+						<span class="text-xs text-gray-11">Italic</span>
 						<Toggle
 							checked={props.segment.italic}
 							onChange={(value) =>
@@ -3381,7 +3413,7 @@ function TextSegmentConfig(props: {
 					</div>
 				</div>
 			</Field>
-			<Field name="颜色" icon={<IconLucidePalette class="size-4" />}>
+			<Field name="Color" icon={<IconLucidePalette class="size-4" />}>
 				<HexColorInput
 					value={props.segment.color}
 					brandColorSwatches={props.brandColorSwatches}
@@ -3392,7 +3424,7 @@ function TextSegmentConfig(props: {
 					}
 				/>
 			</Field>
-			<Field name="淡入淡出时长" icon={<IconLucideTimer class="size-4" />}>
+			<Field name="Fade Duration" icon={<IconLucideTimer class="size-4" />}>
 				<Slider
 					value={[clampNumber(props.segment.fadeDuration ?? 0.15, 0, 1)]}
 					onChange={([value]) =>
@@ -3437,7 +3469,7 @@ function AudioSegmentConfig(props: {
 	return (
 		<div class="space-y-4">
 			<Field
-				name={`音频 ${props.segmentIndex + 1}`}
+				name={`Audio ${props.segmentIndex + 1}`}
 				icon={<IconLucideMusic class="size-4" />}
 			>
 				<div class="flex flex-col gap-3">
@@ -3456,20 +3488,20 @@ function AudioSegmentConfig(props: {
 						/>
 						<div class="flex flex-col flex-1 min-w-0">
 							<span class="text-sm font-medium truncate text-gray-12">
-								{props.segment.name || "音频"}
+								{props.segment.name || "Audio"}
 							</span>
-							<span class="text-xs text-gray-10">点击更换音轨</span>
+							<span class="text-xs text-gray-10">Tap to change track</span>
 						</div>
 						<span class="flex gap-1 items-center px-2 h-7 text-xs font-medium rounded-lg border transition-colors shrink-0 border-gray-3 bg-gray-1 text-gray-11 group-hover:text-gray-12">
 							<IconLucideRefreshCw class="size-3.5" />
-							更换
+							Change
 						</span>
 					</button>
 					<div class="flex gap-3 items-center">
 						<input
 							class="flex-1 px-3 py-2 rounded-lg border border-gray-3 bg-gray-2 text-gray-12"
 							value={props.segment.name ?? ""}
-							placeholder="音频"
+							placeholder="Audio"
 							onInput={(e) =>
 								updateSegment((segment) => {
 									segment.name = e.currentTarget.value;
@@ -3477,7 +3509,7 @@ function AudioSegmentConfig(props: {
 							}
 						/>
 						<div class="flex flex-col gap-2 items-center">
-							<span class="text-xs text-gray-11">启用</span>
+							<span class="text-xs text-gray-11">Enabled</span>
 							<Toggle
 								checked={props.segment.enabled}
 								onChange={(value) =>
@@ -3490,7 +3522,7 @@ function AudioSegmentConfig(props: {
 					</div>
 				</div>
 			</Field>
-			<Field name="音量" icon={<IconLucideVolume2 class="size-4" />}>
+			<Field name="Volume" icon={<IconLucideVolume2 class="size-4" />}>
 				<Slider
 					value={[
 						clampNumber(props.segment.volumeDb, MIN_VOLUME_DB, MAX_VOLUME_DB),
@@ -3510,7 +3542,7 @@ function AudioSegmentConfig(props: {
 					formatTooltip="dB"
 				/>
 			</Field>
-			<Field name="淡入" icon={<IconLucideTimer class="size-4" />}>
+			<Field name="Fade In" icon={<IconLucideTimer class="size-4" />}>
 				<Slider
 					value={[clampNumber(props.segment.fadeIn, 0, fadeMax())]}
 					onChange={([value]) =>
@@ -3524,7 +3556,7 @@ function AudioSegmentConfig(props: {
 					formatTooltip="s"
 				/>
 			</Field>
-			<Field name="淡出" icon={<IconLucideTimer class="size-4" />}>
+			<Field name="Fade Out" icon={<IconLucideTimer class="size-4" />}>
 				<Slider
 					value={[clampNumber(props.segment.fadeOut, 0, fadeMax())]}
 					onChange={([value]) =>
@@ -3563,7 +3595,7 @@ function KeyboardSegmentConfig(props: {
 	return (
 		<div class="space-y-4">
 			<Field
-				name={`键盘 ${props.segmentIndex + 1}`}
+				name={`Keyboard ${props.segmentIndex + 1}`}
 				icon={<IconLucideKeyboard class="size-4" />}
 			>
 				<Input
@@ -3576,12 +3608,12 @@ function KeyboardSegmentConfig(props: {
 					}
 				/>
 			</Field>
-			<Field name="时间" icon={<IconLucideTimer class="size-4" />}>
+			<Field name="Timing" icon={<IconLucideTimer class="size-4" />}>
 				<div class="rounded-xl border border-gray-3 bg-gray-2/70 p-3 space-y-3">
 					<div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-start">
 						<div class="rounded-lg border border-gray-3 bg-gray-1/80 p-2.5 space-y-2">
 							<div class="flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-gray-10">
-								<span>开始</span>
+								<span>Start</span>
 								<span>{formatTime(props.segment.start)}</span>
 							</div>
 							<Input
@@ -3596,10 +3628,10 @@ function KeyboardSegmentConfig(props: {
 								}
 							/>
 						</div>
-						<div class="pt-10 text-xs font-medium text-gray-10">至</div>
+						<div class="pt-10 text-xs font-medium text-gray-10">to</div>
 						<div class="rounded-lg border border-gray-3 bg-gray-1/80 p-2.5 space-y-2">
 							<div class="flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-gray-10">
-								<span>结束</span>
+								<span>End</span>
 								<span>{formatTime(props.segment.end)}</span>
 							</div>
 							<Input
@@ -3616,14 +3648,14 @@ function KeyboardSegmentConfig(props: {
 						</div>
 					</div>
 					<div class="flex items-center justify-between rounded-lg bg-gray-1/70 px-3 py-2 text-xs text-gray-11">
-						<span>时长</span>
+						<span>Duration</span>
 						<span class="font-medium text-gray-12">
 							{Math.max(0, props.segment.end - props.segment.start).toFixed(2)}s
 						</span>
 					</div>
 				</div>
 			</Field>
-			<Field name="淡入淡出时长" icon={<IconLucideTimer class="size-4" />}>
+			<Field name="Fade Duration" icon={<IconLucideTimer class="size-4" />}>
 				<Slider
 					value={[(props.segment.fadeDurationOverride ?? 0.15) * 100]}
 					onChange={([value]) =>
@@ -3671,7 +3703,7 @@ function CaptionSegmentConfig(props: {
 	return (
 		<div class="space-y-4">
 			<Field
-				name={`字幕 ${props.segmentIndex + 1}`}
+				name={`Caption ${props.segmentIndex + 1}`}
 				icon={<IconCapMessageBubble />}
 			>
 				<textarea
@@ -3690,12 +3722,12 @@ function CaptionSegmentConfig(props: {
 					}
 				/>
 			</Field>
-			<Field name="时间" icon={<IconLucideTimer class="size-4" />}>
+			<Field name="Timing" icon={<IconLucideTimer class="size-4" />}>
 				<div class="rounded-xl border border-gray-3 bg-gray-2/70 p-3 space-y-3">
 					<div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-start">
 						<div class="rounded-lg border border-gray-3 bg-gray-1/80 p-2.5 space-y-2">
 							<div class="flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-gray-10">
-								<span>开始</span>
+								<span>Start</span>
 								<span>{formatTime(props.segment.start)}</span>
 							</div>
 							<Input
@@ -3715,10 +3747,10 @@ function CaptionSegmentConfig(props: {
 								}
 							/>
 						</div>
-						<div class="pt-10 text-xs font-medium text-gray-10">至</div>
+						<div class="pt-10 text-xs font-medium text-gray-10">to</div>
 						<div class="rounded-lg border border-gray-3 bg-gray-1/80 p-2.5 space-y-2">
 							<div class="flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-gray-10">
-								<span>结束</span>
+								<span>End</span>
 								<span>{formatTime(props.segment.end)}</span>
 							</div>
 							<Input
@@ -3740,7 +3772,7 @@ function CaptionSegmentConfig(props: {
 						</div>
 					</div>
 					<div class="flex items-center justify-between rounded-lg bg-gray-1/70 px-3 py-2 text-xs text-gray-11">
-						<span>时长</span>
+						<span>Duration</span>
 						<span class="font-medium text-gray-12">
 							{Math.max(0, props.segment.end - props.segment.start).toFixed(2)}s
 						</span>
@@ -3807,7 +3839,7 @@ function MaskSegmentConfig(props: {
 	return (
 		<div class="space-y-4">
 			<Field
-				name={`遮罩 ${props.segmentIndex + 1}`}
+				name={`Mask ${props.segmentIndex + 1}`}
 				icon={<IconLucideBoxSelect class="size-4" />}
 			>
 				<div class="flex items-center justify-between gap-4">
@@ -3828,8 +3860,8 @@ function MaskSegmentConfig(props: {
 						}
 					>
 						{[
-							{ value: "sensitive", label: "敏感" },
-							{ value: "highlight", label: "高亮" },
+							{ value: "sensitive", label: "Sensitive" },
+							{ value: "highlight", label: "Highlight" },
 						].map((option) => (
 							<RadioGroup.Item
 								value={option.value}
@@ -3844,7 +3876,7 @@ function MaskSegmentConfig(props: {
 						))}
 					</RadioGroup>
 					<div class="flex items-center gap-2">
-						<span class="text-xs text-gray-11">启用</span>
+						<span class="text-xs text-gray-11">Enabled</span>
 						<Toggle
 							checked={props.segment.enabled}
 							onChange={(value) =>
@@ -3857,15 +3889,15 @@ function MaskSegmentConfig(props: {
 				</div>
 			</Field>
 			<Show when={props.segment.maskType === "sensitive"}>
-				<Field name="效果" icon={<IconLucideEyeOff class="size-4" />}>
+				<Field name="Effect" icon={<IconLucideEyeOff class="size-4" />}>
 					<RadioGroup
 						class="grid grid-cols-2 gap-2"
 						value={maskEffect()}
 						onChange={(value) => setMaskEffect(value as MaskEffect)}
 					>
 						{[
-							{ value: "blur", label: "模糊" },
-							{ value: "pixelate", label: "像素化" },
+							{ value: "blur", label: "Blur" },
+							{ value: "pixelate", label: "Pixelate" },
 						].map((option) => (
 							<RadioGroup.Item
 								value={option.value}
@@ -3883,7 +3915,7 @@ function MaskSegmentConfig(props: {
 			</Show>
 			<Show when={props.segment.maskType === "sensitive"}>
 				<Field
-					name={maskEffect() === "blur" ? "模糊" : "像素大小"}
+					name={maskEffect() === "blur" ? "Blur" : "Pixel Size"}
 					icon={
 						maskEffect() === "blur" ? (
 							<IconLucideWind class="size-4" />
@@ -3903,7 +3935,7 @@ function MaskSegmentConfig(props: {
 				</Field>
 			</Show>
 			<Show when={props.segment.maskType === "highlight"}>
-				<Field name="外部暗度" icon={<IconLucideMoon class="size-4" />}>
+				<Field name="Outside Darkness" icon={<IconLucideMoon class="size-4" />}>
 					<Slider
 						value={[props.segment.darkness]}
 						onChange={([v]) =>
@@ -3918,7 +3950,7 @@ function MaskSegmentConfig(props: {
 				</Field>
 			</Show>
 			<Show when={props.segment.maskType === "highlight"}>
-				<Field name="淡入淡出时长" icon={<IconLucideTimer class="size-4" />}>
+				<Field name="Fade Duration" icon={<IconLucideTimer class="size-4" />}>
 					<Slider
 						value={[props.segment.fadeDuration ?? 0.15]}
 						onChange={([v]) =>
@@ -4030,7 +4062,7 @@ function ZoomSegmentPreview(props: {
 		<>
 			<div class="space-y-1.5">
 				<div class="text-xs font-medium text-center text-gray-12">
-					缩放 {props.segmentIndex + 1}
+					Zoom {props.segmentIndex + 1}
 				</div>
 				<div class="overflow-hidden relative rounded-sm border aspect-video border-gray-3 bg-gray-3">
 					<canvas
@@ -4042,7 +4074,7 @@ function ZoomSegmentPreview(props: {
 					/>
 					<Show when={!loaded()}>
 						<p class="flex absolute inset-0 justify-center items-center text-xs text-gray-11">
-							加载中...
+							Loading...
 						</p>
 					</Show>
 				</div>
@@ -4073,7 +4105,7 @@ function ZoomSegmentConfig(props: {
 	return (
 		<>
 			<Field
-				name={`缩放 ${props.segmentIndex + 1}`}
+				name={`Zoom ${props.segmentIndex + 1}`}
 				icon={<IconLucideSearch />}
 			>
 				<Slider
@@ -4093,7 +4125,7 @@ function ZoomSegmentConfig(props: {
 					formatTooltip="x"
 				/>
 			</Field>
-			<Field name="缩放模式" icon={<IconCapSettings />}>
+			<Field name="Zoom Mode" icon={<IconCapSettings />}>
 				<KTabs
 					class="space-y-6"
 					value={props.segment.mode === "auto" ? "auto" : "manual"}
@@ -4113,13 +4145,13 @@ function ZoomSegmentConfig(props: {
 							class="z-10 flex-1 py-2.5 text-gray-11 transition-colors duration-100 outline-hidden data-selected:text-gray-12 peer"
 							disabled={!generalSettings.data?.custom_cursor_capture2}
 						>
-							自动
+							Auto
 						</KTabs.Trigger>
 						<KTabs.Trigger
 							value="manual"
 							class="z-10 flex-1 py-2.5 text-gray-11 transition-colors duration-100 outline-hidden data-selected:text-gray-12 peer"
 						>
-							手动
+							Manual
 						</KTabs.Trigger>
 						<KTabs.Indicator class="absolute flex p-px inset-0 transition-transform peer-focus-visible:outline-solid outline-2 outline-blue-9 outline-offset-2 rounded-[0.6rem] overflow-hidden">
 							<div class="flex-1 bg-gray-3" />
@@ -4336,7 +4368,7 @@ function ZoomSegmentConfig(props: {
 											<Show when={!loaded()}>
 												<div class="flex absolute inset-0 justify-center items-center bg-gray-2">
 													<div class="text-sm text-gray-11">
-														正在加载预览...
+														Loading preview...
 													</div>
 												</div>
 											</Show>
@@ -4408,7 +4440,7 @@ function ClipSegmentConfig(props: {
 						onClick={() => setEditorState("timeline", "selection", null)}
 						leftIcon={<IconLucideCheck />}
 					>
-						完成
+						Done
 					</EditorButton>
 				</div>
 				<EditorButton
@@ -4419,18 +4451,18 @@ function ClipSegmentConfig(props: {
 					disabled={(project.timeline?.segments.length ?? 0) < 2}
 					leftIcon={<IconCapTrash />}
 				>
-					删除
+					Delete
 				</EditorButton>
 			</div>
 
 			<div class="space-y-0.5">
-				<h3 class="font-medium text-gray-12">片段设置</h3>
+				<h3 class="font-medium text-gray-12">Segment Settings</h3>
 				<p class="text-gray-11">
-					这些设置仅适用于所选片段
+					These settings apply to only the selected segment
 				</p>
 			</div>
 
-			<Field name="速度" icon={<IconLucideFastForward class="size-4" />}>
+			<Field name="Speed" icon={<IconLucideFastForward class="size-4" />}>
 				<KRadioGroup
 					class="flex flex-row gap-1.5 -mt-1"
 					value={props.segment.timescale.toString()}
@@ -4455,8 +4487,8 @@ function ClipSegmentConfig(props: {
 				<Show when={props.segment.timescale !== 1}>
 					<div class="space-y-2 pt-2">
 						<p class="text-gray-11">
-							静音最快。保持音调可让声音更自然，而匹配
-							速度会随播放速度升高或降低音调。
+							Mute is fastest. Maintain pitch keeps voices natural, while Match
+							speed raises or lowers pitch with playback speed.
 						</p>
 						<KRadioGroup
 							class="grid grid-cols-3 gap-1.5"
@@ -4465,9 +4497,9 @@ function ClipSegmentConfig(props: {
 						>
 							<For
 								each={[
-									{ value: "mute", label: "静音" },
-									{ value: "maintainPitch", label: "保持音调" },
-									{ value: "matchSpeed", label: "匹配速度" },
+									{ value: "mute", label: "Mute" },
+									{ value: "maintainPitch", label: "Maintain pitch" },
+									{ value: "matchSpeed", label: "Match speed" },
 								]}
 							>
 								{(option) => (
@@ -4484,20 +4516,21 @@ function ClipSegmentConfig(props: {
 			</Field>
 
 			<div class="space-y-0.5 pt-2">
-				<h3 class="font-medium text-gray-12">剪辑设置</h3>
+				<h3 class="font-medium text-gray-12">Clip Settings</h3>
 				<p class="text-gray-11">
-					这些设置适用于当前片段的所有分段
+					These settings apply to all segments for the current clip
 				</p>
 				<Show when={offsetsAutoCalculated()}>
 					<p class="text-gray-11">
-						Cap 已自动计算这些偏移以保持音频与视频同步。若仍有不同步，可手动调整。
+						Cap calculated these offsets automatically to keep audio in sync
+						with the video. Adjust them if anything still sounds off.
 					</p>
 				</Show>
 			</div>
 
 			{meta().hasSystemAudio && (
 				<SourceOffsetField
-					name="系统音频偏移"
+					name="System Audio Offset"
 					value={offsets().system_audio}
 					autoCalculated={offsetsAutoCalculated()}
 					onChange={(offset) => {
@@ -4507,7 +4540,7 @@ function ClipSegmentConfig(props: {
 			)}
 			{meta().hasMicrophone && (
 				<SourceOffsetField
-					name="麦克风偏移"
+					name="Microphone Offset"
 					value={offsets().mic}
 					autoCalculated={offsetsAutoCalculated()}
 					onChange={(offset) => {
@@ -4517,7 +4550,7 @@ function ClipSegmentConfig(props: {
 			)}
 			{meta().hasCamera && (
 				<SourceOffsetField
-					name="摄像头偏移"
+					name="Camera Offset"
 					value={offsets().camera}
 					autoCalculated={offsetsAutoCalculated()}
 					onChange={(offset) => {
@@ -4554,7 +4587,7 @@ function SourceOffsetField(props: {
 	return (
 		<Field
 			name={props.name}
-			badge={props.autoCalculated ? "自动同步" : undefined}
+			badge={props.autoCalculated ? "Auto-synced" : undefined}
 		>
 			<div class="flex flex-row justify-between items-center -mt-2 w-full">
 				<div class="flex flex-row items-end space-x-1">
@@ -4667,15 +4700,15 @@ function SceneSegmentConfig(props: {
 	const description = () => {
 		switch (props.segment.mode) {
 			case "cameraOnly":
-				return "仅显示摄像头画面";
+				return "Shows only the camera feed";
 			case "hideCamera":
-				return "仅显示屏幕录制";
+				return "Shows only the screen recording";
 			case "splitScreen":
-				return "屏幕与摄像头并排显示（竖屏时自动堆叠）";
+				return "Screen and camera side by side (auto-stacks in portrait)";
 			case "floating":
-				return "屏幕与摄像头以圆角卡片形式浮于背景之上";
+				return "Screen and camera float side by side as rounded cards over the background";
 			default:
-				return "同时显示屏幕与摄像头";
+				return "Shows both screen and camera";
 		}
 	};
 
@@ -4694,7 +4727,7 @@ function SceneSegmentConfig(props: {
 						onClick={() => setEditorState("timeline", "selection", null)}
 						leftIcon={<IconLucideCheck />}
 					>
-						完成
+						Done
 					</EditorButton>
 				</div>
 				<EditorButton
@@ -4704,10 +4737,10 @@ function SceneSegmentConfig(props: {
 					}}
 					leftIcon={<IconCapTrash />}
 				>
-					删除
+					Delete
 				</EditorButton>
 			</div>
-			<Field name="摄像头布局" icon={<IconLucideLayout />}>
+			<Field name="Camera Layout" icon={<IconLucideLayout />}>
 				<KTabs
 					class="space-y-3"
 					value={props.segment.mode || "default"}
@@ -4740,15 +4773,15 @@ function SceneSegmentConfig(props: {
 					<KTabs.List class="grid grid-cols-2 gap-2">
 						<KTabs.Trigger value="default" class={SCENE_MODE_TRIGGER_CLASS}>
 							<IconLucideMonitor class="size-3.5" />
-							默认
+							Default
 						</KTabs.Trigger>
 						<KTabs.Trigger value="cameraOnly" class={SCENE_MODE_TRIGGER_CLASS}>
 							<IconLucideVideo class="size-3.5" />
-							仅摄像头
+							Camera Only
 						</KTabs.Trigger>
 						<KTabs.Trigger value="hideCamera" class={SCENE_MODE_TRIGGER_CLASS}>
 							<IconLucideEyeOff class="size-3.5" />
-							隐藏摄像头
+							Hide Camera
 						</KTabs.Trigger>
 						<KTabs.Trigger
 							value="splitScreen"
@@ -4756,7 +4789,7 @@ function SceneSegmentConfig(props: {
 							class={SCENE_MODE_TRIGGER_CLASS}
 						>
 							<IconLucideColumns2 class="size-3.5" />
-							分屏
+							Split Screen
 						</KTabs.Trigger>
 						<KTabs.Trigger
 							value="floating"
@@ -4764,7 +4797,7 @@ function SceneSegmentConfig(props: {
 							class={SCENE_MODE_TRIGGER_CLASS}
 						>
 							<IconLucidePanelRight class="size-3.5" />
-							浮动
+							Floating
 						</KTabs.Trigger>
 					</KTabs.List>
 					<div class="p-2.5 rounded-md bg-gray-2 border border-gray-3">
@@ -4773,9 +4806,9 @@ function SceneSegmentConfig(props: {
 				</KTabs>
 			</Field>
 
-			<Field name="转场" icon={<IconLucideTimer class="size-4" />}>
+			<Field name="Transition" icon={<IconLucideTimer class="size-4" />}>
 				<div class="flex flex-col gap-3">
-					<Subfield name="入">
+					<Subfield name="In">
 						<Slider
 							class="flex-1 ml-4"
 							value={[props.segment.transitionIn ?? DEFAULT_SCENE_TRANSITION]}
@@ -4794,7 +4827,7 @@ function SceneSegmentConfig(props: {
 							formatTooltip={(v) => `${v.toFixed(2)}s`}
 						/>
 					</Subfield>
-					<Subfield name="出">
+					<Subfield name="Out">
 						<Slider
 							class="flex-1 ml-4"
 							value={[props.segment.transitionOut ?? DEFAULT_SCENE_TRANSITION]}
@@ -4823,7 +4856,7 @@ function SceneSegmentConfig(props: {
 				}
 			>
 				<div class="w-full border-t border-dashed border-gray-5" />
-				<Field name="屏幕缩放" icon={<IconCapEnlarge class="size-4" />}>
+				<Field name="Screen Zoom" icon={<IconCapEnlarge class="size-4" />}>
 					<Slider
 						value={[split().screenZoom * 100]}
 						onChange={(v) => updateSplit({ screenZoom: v[0] / 100 })}
@@ -4833,14 +4866,14 @@ function SceneSegmentConfig(props: {
 						formatTooltip="%"
 					/>
 				</Field>
-				<Field name="屏幕位置" icon={<IconLucideMove class="size-4" />}>
+				<Field name="Screen Position" icon={<IconLucideMove class="size-4" />}>
 					<PositionPad
 						value={() => split().screenPosition}
 						onChange={(pos) => updateSplit({ screenPosition: pos })}
 					/>
 				</Field>
 				<div class="w-full border-t border-dashed border-gray-5" />
-				<Field name="摄像头缩放" icon={<IconCapEnlarge class="size-4" />}>
+				<Field name="Camera Zoom" icon={<IconCapEnlarge class="size-4" />}>
 					<Slider
 						value={[split().cameraZoom * 100]}
 						onChange={(v) => updateSplit({ cameraZoom: v[0] / 100 })}
@@ -4850,7 +4883,7 @@ function SceneSegmentConfig(props: {
 						formatTooltip="%"
 					/>
 				</Field>
-				<Field name="摄像头位置" icon={<IconLucideMove class="size-4" />}>
+				<Field name="Camera Position" icon={<IconLucideMove class="size-4" />}>
 					<PositionPad
 						value={() => split().cameraPosition}
 						onChange={(pos) => updateSplit({ cameraPosition: pos })}

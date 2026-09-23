@@ -23,6 +23,7 @@ import { SignInButton } from "~/components/SignInButton";
 
 import { authStore, userProfileStore } from "~/store";
 import { trackEvent } from "~/utils/analytics";
+import { createSignInMutation } from "~/utils/auth";
 import { commands } from "~/utils/tauri";
 import {
 	apiClient,
@@ -134,6 +135,7 @@ function SettingsContentSkeleton() {
 export default function Settings(props: RouteSectionProps) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const signIn = createSignInMutation();
 	const [auth, setAuth] =
 		createSignal<Awaited<ReturnType<typeof authStore.get>>>();
 	const [authLoaded, setAuthLoaded] = createSignal(false);
@@ -194,68 +196,68 @@ export default function Settings(props: RouteSectionProps) {
 	const settingsItems = [
 		{
 			href: "general",
-			name: "通用",
+			name: "General",
 			icon: IconCapSettings,
 		},
 		{
 			href: "hotkeys",
-			name: "快捷键",
+			name: "Shortcuts",
 			icon: IconCapHotkeys,
 		},
 		{
 			href: "cli",
-			name: "命令行",
+			name: "CLI",
 			icon: IconLucideTerminal,
 		},
 		{
 			href: "recordings",
-			name: "录制",
+			name: "Recordings",
 			icon: IconLucideSquarePlay,
 		},
 		{
 			href: "screenshots",
-			name: "截图",
+			name: "Screenshots",
 			icon: IconLucideImage,
 		},
 		{
 			href: "automations",
-			name: "自动化",
+			name: "Automations",
 			icon: IconLucideZap,
 		},
 		{
 			href: "transcription",
-			name: "转写",
+			name: "Transcription",
 			icon: IconCapCaptions,
 		},
 		{
 			href: "integrations",
-			name: "集成",
+			name: "Integrations",
 			icon: IconLucideUnplug,
 		},
 		{
 			href: "license",
-			name: "许可证",
+			name: "License",
 			icon: IconLucideGift,
 		},
 		{
 			href: "experimental",
-			name: "实验功能",
+			name: "Experimental",
 			icon: IconCapSettings,
 		},
 		{
 			href: "feedback",
-			name: "反馈",
+			name: "Feedback",
 			icon: IconLucideMessageSquarePlus,
 		},
 		{
 			href: "changelog",
-			name: "更新日志",
+			name: "Changelog",
 			icon: IconLucideBell,
 		},
 	];
 	const accountName = createMemo(() => {
-		if (!auth()) return "本地使用中";
-		if (!userProfile.isSuccess) return "已登录";
+		if (!auth()) return "Click to sign in";
+		if (!userProfile.isSuccess) return "Signed in";
 
 		const name = userProfile.data?.name?.trim();
 		if (name) return name;
@@ -263,7 +265,7 @@ export default function Settings(props: RouteSectionProps) {
 		const email = userProfile.data?.email?.trim();
 		if (email) return email;
 
-		return "已登录";
+		return "Signed in";
 	});
 	const accountRemoteImageUrl = createMemo(() => {
 		if (!userProfile.isSuccess) return null;
@@ -282,7 +284,16 @@ export default function Settings(props: RouteSectionProps) {
 	const handleProfileClick = () => {
 		if (auth()) {
 			openDashboard();
+			return;
 		}
+
+		if (signIn.isPending) {
+			signIn.variables.abort();
+			signIn.reset();
+			return;
+		}
+
+		signIn.mutate(new AbortController());
 	};
 	const handleProfileImageError = (imageUrl: string) => {
 		setFailedProfileImageUrl(imageUrl);
@@ -510,8 +521,8 @@ export default function Settings(props: RouteSectionProps) {
 								<button
 									type="button"
 									class="-ml-1 cursor-copy rounded px-1 py-0.5 transition-colors hover:bg-gray-3 hover:text-gray-12"
-									title="复制版本号到剪贴板"
-									aria-label={`复制版本号 ${v()} 到剪贴板`}
+									title="Copy version to clipboard"
+									aria-label={`Copy version ${v()} to clipboard`}
 									onClick={() => copyVersion(v())}
 								>
 									v{v()}
@@ -524,7 +535,7 @@ export default function Settings(props: RouteSectionProps) {
 											shell.open("https://cap.so/download/versions")
 										}
 									>
-										查看历史版本
+										View previous versions
 									</button>
 									<button
 										type="button"
@@ -533,8 +544,8 @@ export default function Settings(props: RouteSectionProps) {
 										onClick={checkForUpdates}
 									>
 										{isCheckingForUpdates()
-											? "检查中..."
-											: "检查更新"}
+											? "Checking..."
+											: "Check for updates"}
 									</button>
 								</div>
 							</div>
@@ -548,12 +559,10 @@ export default function Settings(props: RouteSectionProps) {
 					>
 						{auth() ? (
 							<Button onClick={handleAuth} variant="gray" class="w-full">
-								退出登录
+								Sign Out
 							</Button>
 						) : (
-							<SignInButton variant="gray" class="w-full">
-								登录云端（可选）
-							</SignInButton>
+							<SignInButton>Sign In</SignInButton>
 						)}
 					</Show>
 				</div>

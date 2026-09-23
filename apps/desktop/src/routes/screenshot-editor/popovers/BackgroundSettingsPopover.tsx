@@ -39,10 +39,10 @@ function prewarmBackground(path: string | null | undefined) {
 }
 
 const BACKGROUND_SOURCES = {
-	wallpaper: "壁纸",
-	image: "图片",
-	color: "纯色",
-	gradient: "渐变",
+	wallpaper: "Wallpaper",
+	image: "Image",
+	color: "Color",
+	gradient: "Gradient",
 } satisfies Record<BackgroundSource["type"], string>;
 
 const BACKGROUND_SOURCES_LIST = [
@@ -135,11 +135,11 @@ type WallpaperName = (typeof WALLPAPER_NAMES)[number];
 
 const BACKGROUND_THEMES = {
 	macOS: "macOS",
-	dark: "深色",
-	blue: "蓝色",
-	cities: "城市",
-	purple: "紫色",
-	orange: "橙色",
+	dark: "Dark",
+	blue: "Blue",
+	cities: "Cities",
+	purple: "Purple",
+	orange: "Orange",
 };
 
 export function BackgroundSettingsPopover() {
@@ -238,7 +238,7 @@ export function BackgroundSettingsPopover() {
 					)
 				}
 				leftIcon={<IconCapImage class="size-4" />}
-				tooltipText="背景"
+				tooltipText="Background"
 				kbd={["B"]}
 			/>
 			<Popover.Portal>
@@ -249,7 +249,7 @@ export function BackgroundSettingsPopover() {
 					>
 						<Field
 							icon={<IconCapImage class="size-4" />}
-							name="背景图片"
+							name="Background Image"
 						>
 							<KTabs
 								value={project.background.source.type}
@@ -369,7 +369,7 @@ export function BackgroundSettingsPopover() {
 															src={photo.url}
 															loading="eager"
 															class="object-cover w-full h-full"
-															alt="壁纸选项"
+															alt="Wallpaper option"
 														/>
 													</KRadioGroup.ItemControl>
 												</KRadioGroup.Item>
@@ -402,7 +402,7 @@ export function BackgroundSettingsPopover() {
 												<img
 													src={convertFileSrc(source())}
 													class="object-cover w-full h-full"
-													alt="已选背景"
+													alt="Selected background"
 												/>
 												<div class="absolute top-2 right-2">
 													<button
@@ -557,7 +557,7 @@ export function BackgroundSettingsPopover() {
 							</KTabs>
 						</Field>
 
-						<Field name="背景模糊" icon={<IconCapBgBlur />}>
+						<Field name="Background Blur" icon={<IconCapBgBlur />}>
 							<Slider
 								value={[project.background.blur]}
 								onChange={(v) => setProject("background", "blur", v[0])}

@@ -83,49 +83,49 @@ type TrackDefinition = {
 const trackDefinitions: TrackDefinition[] = [
 	{
 		type: "clip",
-		label: "片段",
+		label: "Clip",
 		icon: trackIcons.clip,
 		locked: true,
 	},
 	{
 		type: "caption",
-		label: "字幕",
+		label: "Captions",
 		icon: trackIcons.caption,
 		locked: false,
 	},
 	{
 		type: "keyboard",
-		label: "键盘",
+		label: "Keyboard",
 		icon: trackIcons.keyboard,
 		locked: false,
 	},
 	{
 		type: "text",
-		label: "文本",
+		label: "Text",
 		icon: trackIcons.text,
 		locked: false,
 	},
 	{
 		type: "mask",
-		label: "遮罩",
+		label: "Mask",
 		icon: trackIcons.mask,
 		locked: false,
 	},
 	{
 		type: "audio",
-		label: "音频",
+		label: "Audio",
 		icon: trackIcons.audio,
 		locked: false,
 	},
 	{
 		type: "zoom",
-		label: "缩放",
+		label: "Zoom",
 		icon: trackIcons.zoom,
 		locked: true,
 	},
 	{
 		type: "scene",
-		label: "场景",
+		label: "Scene",
 		icon: trackIcons.scene,
 		locked: false,
 	},
@@ -895,7 +895,7 @@ export function Timeline(props: {
 
 			if (result.segments.length < 1) {
 				toast.error(
-					"未生成字幕。音频可能过于安静或不清晰。",
+					"No captions were generated. The audio might be too quiet or unclear.",
 				);
 				return;
 			}
@@ -913,11 +913,11 @@ export function Timeline(props: {
 
 			setEditorState("timeline", "tracks", "caption", true);
 			setEditorState("captions", "isStale", false);
-			toast.success("字幕生成成功！");
+			toast.success("Captions generated successfully!");
 		} catch (error) {
 			console.error("Error generating captions:", error);
 			const errorMessage = getCaptionGenerationErrorMessage(error);
-			toast.error(`字幕生成失败：${errorMessage}`);
+			toast.error(`Failed to generate captions: ${errorMessage}`);
 		} finally {
 			setEditorState("captions", "isGenerating", false);
 		}
@@ -1119,7 +1119,7 @@ export function Timeline(props: {
 						}}
 					>
 						<div class="flex flex-col gap-2 min-h-full">
-							<TrackRow icon={trackIcons.clip} label="视频" type="clip">
+							<TrackRow icon={trackIcons.clip} label="Video" type="clip">
 								<ClipTrack
 									ref={setTimelineRef}
 									handleUpdatePlayhead={handleUpdatePlayhead}
@@ -1230,8 +1230,8 @@ export function Timeline(props: {
 										? () => handleClearTrackSegments("zoom")
 										: undefined
 								}
-								deleteLabel="全部清除"
-								deleteTitle="删除所有缩放片段"
+								deleteLabel="Clear all"
+								deleteTitle="Delete all zoom segments"
 							>
 								<ZoomTrack
 									onDragStateChanged={(v) => {
@@ -1250,8 +1250,8 @@ export function Timeline(props: {
 											? () => handleClearTrackSegments("scene")
 											: undefined
 									}
-									deleteLabel="全部清除"
-									deleteTitle="删除所有场景片段"
+									deleteLabel="Clear all"
+									deleteTitle="Delete all scene segments"
 								>
 									<SceneTrack
 										onDragStateChanged={(v) => {
@@ -1302,11 +1302,11 @@ function TrackRow(props: {
 							props.onDelete?.();
 						}}
 						onMouseDown={(e) => e.stopPropagation()}
-						title={props.deleteTitle ?? "删除轨道"}
+						title={props.deleteTitle ?? "Delete track"}
 					>
 						<IconCapTrash class="size-4" />
 						<span class="text-[0.625rem] leading-none font-medium">
-							{props.deleteLabel ?? "删除"}
+							{props.deleteLabel ?? "Delete"}
 						</span>
 					</button>
 				</Show>

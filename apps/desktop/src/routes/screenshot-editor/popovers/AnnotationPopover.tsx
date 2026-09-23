@@ -33,7 +33,7 @@ export function AnnotationPopover() {
 			<Popover.Trigger
 				as={EditorButton}
 				leftIcon={<IconLucidePencil class="size-4" />}
-				tooltipText="标注设置"
+				tooltipText="Annotation Settings"
 				disabled={!selectedAnnotation()}
 			/>
 			<Popover.Portal>
@@ -43,7 +43,7 @@ export function AnnotationPopover() {
 							when={selectedAnnotation()}
 							fallback={
 								<div class="text-center text-gray-11 text-xs font-medium">
-									选择一个标注进行编辑。
+									Select an annotation to edit.
 								</div>
 							}
 						>
@@ -51,7 +51,7 @@ export function AnnotationPopover() {
 								<div class="flex flex-col gap-4 animate-in fade-in slide-in-from-top-2">
 									<div class="flex flex-col gap-2">
 										<span class="text-xs font-medium text-gray-11">
-											描边颜色
+											Stroke Color
 										</span>
 										<RgbInput
 											value={
@@ -91,7 +91,7 @@ export function AnnotationPopover() {
 										<div class="flex flex-col gap-2">
 											<div class="flex flex-row justify-between items-center">
 												<span class="text-xs font-medium text-gray-11">
-													填充颜色
+													Fill Color
 												</span>
 												<Toggle
 													size="sm"
@@ -148,7 +148,7 @@ export function AnnotationPopover() {
 
 									<div class="flex flex-col gap-2">
 										<span class="text-xs font-medium text-gray-11">
-											描边宽度
+											Stroke Width
 										</span>
 										<Slider
 											value={[annotation().strokeWidth]}
@@ -161,7 +161,7 @@ export function AnnotationPopover() {
 
 									<div class="flex flex-col gap-2">
 										<span class="text-xs font-medium text-gray-11">
-											不透明度
+											Opacity
 										</span>
 										<Slider
 											value={[annotation().opacity * 100]}
@@ -175,7 +175,7 @@ export function AnnotationPopover() {
 									{annotation().type === "text" && (
 										<div class="flex flex-col gap-2">
 											<span class="text-xs font-medium text-gray-11">
-												字号
+												Font Size
 											</span>
 											<Slider
 												value={[annotation().height || 24]} // Text uses height as font size roughly
@@ -198,7 +198,7 @@ export function AnnotationPopover() {
 												setSelectedAnnotationId(null);
 											}}
 										>
-											删除标注
+											Delete Annotation
 										</EditorButton>
 									</div>
 								</div>

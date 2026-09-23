@@ -320,7 +320,7 @@ fn create_previous_submenu(
     cache: &PreviousItemsCache,
 ) -> tauri::Result<Submenu<tauri::Wry>> {
     if cache.items.is_empty() {
-        let submenu = Submenu::with_id(app, "previous", "最近项目", false)?;
+        let submenu = Submenu::with_id(app, "previous", "Previous", false)?;
         submenu.append(&MenuItem::with_id(
             app,
             "previous_empty",
@@ -331,7 +331,7 @@ fn create_previous_submenu(
         return Ok(submenu);
     }
 
-    let submenu = Submenu::with_id(app, "previous", "最近项目", true)?;
+    let submenu = Submenu::with_id(app, "previous", "Previous", true)?;
 
     for item in &cache.items {
         let id = TrayItem::PreviousItem(item.path.to_string_lossy().to_string());
@@ -384,15 +384,15 @@ pub(crate) fn refresh_tray_menu_for_app(app: &AppHandle) {
 fn create_mode_submenu(app: &AppHandle) -> tauri::Result<Submenu<tauri::Wry>> {
     let current_mode = get_current_mode(app);
 
-    let submenu = Submenu::with_id(app, "select_mode", "选择模式", true)?;
+    let submenu = Submenu::with_id(app, "select_mode", "Select Mode", true)?;
 
     let modes = [
-        (TrayItem::ModeStudio, RecordingMode::Studio, "棚拍"),
-        (TrayItem::ModeInstant, RecordingMode::Instant, "即时"),
+        (TrayItem::ModeStudio, RecordingMode::Studio, "Studio"),
+        (TrayItem::ModeInstant, RecordingMode::Instant, "Instant"),
         (
             TrayItem::ModeScreenshot,
             RecordingMode::Screenshot,
-            "截图",
+            "Screenshot",
         ),
     ];
 
@@ -419,7 +419,7 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
                 &MenuItem::with_id(
                     app,
                     TrayItem::RequestPermissions,
-                    "请求权限",
+                    "Request Permissions",
                     true,
                     None::<&str>,
                 )?,
@@ -431,7 +431,7 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
                     false,
                     None::<&str>,
                 )?,
-                &MenuItem::with_id(app, TrayItem::Quit, "退出 Cap", true, None::<&str>)?,
+                &MenuItem::with_id(app, TrayItem::Quit, "Quit Cap", true, None::<&str>)?,
             ],
         );
     }
@@ -446,7 +446,7 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
     menu.append(&MenuItem::with_id(
         app,
         TrayItem::OpenCap,
-        "打开主窗口",
+        "Open Main Window",
         true,
         None::<&str>,
     )?)?;
@@ -455,21 +455,21 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
         menu.append(&MenuItem::with_id(
             app,
             TrayItem::RecordDisplay,
-            "截取显示器",
+            "Screenshot Display",
             true,
             None::<&str>,
         )?)?;
         menu.append(&MenuItem::with_id(
             app,
             TrayItem::RecordWindow,
-            "截取窗口",
+            "Screenshot Window",
             true,
             None::<&str>,
         )?)?;
         menu.append(&MenuItem::with_id(
             app,
             TrayItem::RecordArea,
-            "截取区域",
+            "Screenshot Area",
             true,
             None::<&str>,
         )?)?;
@@ -477,28 +477,28 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
         menu.append(&MenuItem::with_id(
             app,
             TrayItem::RecordDisplay,
-            "录制显示器",
+            "Record Display",
             true,
             None::<&str>,
         )?)?;
         menu.append(&MenuItem::with_id(
             app,
             TrayItem::RecordWindow,
-            "录制窗口",
+            "Record Window",
             true,
             None::<&str>,
         )?)?;
         menu.append(&MenuItem::with_id(
             app,
             TrayItem::RecordArea,
-            "录制区域",
+            "Record Area",
             true,
             None::<&str>,
         )?)?;
         menu.append(&MenuItem::with_id(
             app,
             TrayItem::TakeScreenshot,
-            "截取屏幕",
+            "Take a Screenshot",
             true,
             None::<&str>,
         )?)?;
@@ -507,7 +507,7 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
     menu.append(&MenuItem::with_id(
         app,
         TrayItem::ImportVideo,
-        "导入媒体...",
+        "Import Media...",
         true,
         None::<&str>,
     )?)?;
@@ -520,21 +520,21 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
     menu.append(&MenuItem::with_id(
         app,
         TrayItem::ViewAllRecordings,
-        "查看全部录制",
+        "View all recordings",
         true,
         None::<&str>,
     )?)?;
     menu.append(&MenuItem::with_id(
         app,
         TrayItem::ViewAllScreenshots,
-        "查看全部截图",
+        "View all screenshots",
         true,
         None::<&str>,
     )?)?;
     menu.append(&MenuItem::with_id(
         app,
         TrayItem::OpenSettings,
-        "设置",
+        "Settings",
         true,
         None::<&str>,
     )?)?;
@@ -543,7 +543,7 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
     menu.append(&MenuItem::with_id(
         app,
         TrayItem::UploadLogs,
-        "上传日志",
+        "Upload Logs",
         true,
         None::<&str>,
     )?)?;
@@ -557,7 +557,7 @@ fn build_tray_menu(app: &AppHandle, cache: &PreviousItemsCache) -> tauri::Result
     menu.append(&MenuItem::with_id(
         app,
         TrayItem::Quit,
-        "退出 Cap",
+        "Quit Cap",
         true,
         None::<&str>,
     )?)?;

@@ -47,9 +47,9 @@ export default function FeedbackTab() {
 		setUploadingLogs(true);
 		try {
 			await commands.uploadLogs();
-			toast.success("日志上传成功");
+			toast.success("Logs uploaded successfully");
 		} catch (error) {
-			toast.error("日志上传失败");
+			toast.error("Failed to upload logs");
 			console.error("Failed to upload logs:", error);
 		} finally {
 			setUploadingLogs(false);
@@ -60,8 +60,8 @@ export default function FeedbackTab() {
 		<div class="cap-settings-page flex flex-col w-full h-full custom-scroll">
 			<SettingsPageContent>
 				<Section
-					title="反馈"
-					description="提交反馈或报告问题，帮助我们改进 Cap。"
+					title="Feedback"
+					description="Help us improve Cap by submitting feedback or reporting bugs. We'll get right on it."
 				>
 					<form
 						class="space-y-4"
@@ -75,7 +75,7 @@ export default function FeedbackTab() {
 								<textarea
 									value={feedback()}
 									onInput={(e) => setFeedback(e.currentTarget.value)}
-									placeholder="告诉我们你对 Cap 的看法…"
+									placeholder="Tell us what you think about Cap..."
 									required
 									minLength={10}
 									class="p-2 w-full h-32 text-[13px] rounded-md border transition-colors duration-200 resize-none bg-gray-2 placeholder:text-gray-10 border-gray-3 text-primary focus:outline-hidden focus:ring-1 focus:ring-gray-8 hover:border-gray-6"
@@ -89,7 +89,7 @@ export default function FeedbackTab() {
 							)}
 
 							{submission.result?.success && (
-								<p class="text-sm text-primary">感谢你的反馈！</p>
+								<p class="text-sm text-primary">Thank you for your feedback!</p>
 							)}
 
 							<Button
@@ -99,28 +99,28 @@ export default function FeedbackTab() {
 								disabled={feedback().trim().length < 4}
 								class="mt-2"
 							>
-								{submission.pending ? "提交中…" : "提交反馈"}
+								{submission.pending ? "Submitting..." : "Submit Feedback"}
 							</Button>
 						</fieldset>
 					</form>
 				</Section>
 
 				<Section
-					title="加入社区"
-					description="有问题、想分享想法，或只是闲聊？加入 Cap Discord 社区。"
+					title="Join the Community"
+					description="Have questions, want to share ideas, or just hang out? Join the Cap Discord community."
 				>
 					<Button
 						onClick={() => shell.open("https://cap.link/discord")}
 						size="md"
 						variant="gray"
 					>
-						加入 Discord
+						Join Discord
 					</Button>
 				</Section>
 
 				<Section
-					title="调试信息"
-					description="上传日志以帮助我们诊断 Cap 的问题。不包含个人信息。"
+					title="Debug Information"
+					description="Upload your logs to help us diagnose issues with Cap. No personal information is included."
 				>
 					<Button
 						onClick={handleUploadLogs}
@@ -128,16 +128,16 @@ export default function FeedbackTab() {
 						variant="gray"
 						disabled={uploadingLogs()}
 					>
-						{uploadingLogs() ? "上传中…" : "上传日志"}
+						{uploadingLogs() ? "Uploading..." : "Upload Logs"}
 					</Button>
 				</Section>
 
-				<Section title="系统信息">
+				<Section title="System Information">
 					<Show
 						when={!diagnostics.loading && diagnostics()}
 						fallback={
 							<p class="text-xs leading-relaxed text-gray-10">
-								正在加载系统信息…
+								Loading system information...
 							</p>
 						}
 					>
@@ -162,7 +162,7 @@ export default function FeedbackTab() {
 									<Show when={osVersion}>
 										{(ver) => (
 											<div class="space-y-1">
-												<p class="text-gray-11 font-medium">操作系统</p>
+												<p class="text-gray-11 font-medium">Operating System</p>
 												<p class="text-gray-10 bg-gray-2 px-2 py-1.5 rounded-sm font-mono text-xs">
 													{ver().displayName}
 												</p>
@@ -171,7 +171,7 @@ export default function FeedbackTab() {
 									</Show>
 
 									<div class="space-y-1">
-										<p class="text-gray-11 font-medium">采集支持</p>
+										<p class="text-gray-11 font-medium">Capture Support</p>
 										<div class="flex gap-2 flex-wrap">
 											<span
 												class={`px-2 py-1 rounded text-xs ${
@@ -180,15 +180,15 @@ export default function FeedbackTab() {
 														: "bg-red-500/20 text-red-400"
 												}`}
 											>
-												屏幕采集：
-												{captureSupported ? "支持" : "不支持"}
+												Screen Capture:{" "}
+												{captureSupported ? "Supported" : "Not Supported"}
 											</span>
 										</div>
 									</div>
 
 									<Show when={(d.availableEncoders as string[])?.length > 0}>
 										<div class="space-y-1">
-											<p class="text-gray-11 font-medium">可用编码器</p>
+											<p class="text-gray-11 font-medium">Available Encoders</p>
 											<div class="flex gap-1.5 flex-wrap">
 												<For each={d.availableEncoders as string[]}>
 													{(encoder) => (
