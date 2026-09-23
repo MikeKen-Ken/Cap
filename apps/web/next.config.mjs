@@ -2,6 +2,8 @@ import("dotenv").then(({ config }) => config({ path: "../../.env" }));
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import ffmpegStaticPath from "ffmpeg-static";
 import workflowNext from "workflow/next";
 
 const { withWorkflow } = workflowNext;
@@ -11,12 +13,18 @@ const packageJson = JSON.parse(
 );
 const { version } = packageJson;
 
-const ffmpegTracingIncludes = [
-	"./node_modules/ffmpeg-static/ffmpeg",
-	"./node_modules/.pnpm/ffmpeg-static@5.3.0/node_modules/ffmpeg-static/ffmpeg",
-];
+const appDirectory = fileURLToPath(new URL(".", import.meta.url));
+const ffmpegTracingIncludes = ffmpegStaticPath
+	? [
+			path
+				.relative(appDirectory, fs.realpathSync(ffmpegStaticPath))
+				.split(path.sep)
+				.join("/"),
+		]
+	: [];
 
 const nextConfig = {
+	outputFileTracingRoot: path.resolve(appDirectory, "../.."),
 	reactStrictMode: true,
 	serverExternalPackages: ["ffmpeg-static", "prettier"],
 	outputFileTracingIncludes: {
@@ -24,6 +32,8 @@ const nextConfig = {
 		"/api/tools/loom-download": ffmpegTracingIncludes,
 		"/api/og": ["./lib/og/fonts/*.ttf"],
 		"/api/video/og": ["./lib/og/fonts/*.ttf", ...ffmpegTracingIncludes],
+		"/dashboard/settings/organization/billing": ["./lib/baa/*.pdf"],
+		"/api/settings/billing/baa/download": ["./lib/baa/*.pdf"],
 	},
 	transpilePackages: [
 		"@cap/ui",

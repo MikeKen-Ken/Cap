@@ -17,10 +17,6 @@ import {
 } from "~/store";
 import { createQueryInvalidate } from "./events";
 import {
-	type RecordingOptionsLocalState,
-	recordingOptionsPatchFromStore,
-} from "./recording-options-sync";
-import {
 	type CameraInfo,
 	commands,
 	type DeviceOrModelID,
@@ -145,6 +141,12 @@ export function createPermissionsQuery() {
 	}));
 }
 
+export const getEditorRecordingTarget = queryOptions({
+	queryKey: ["editorRecordingTarget"] as const,
+	queryFn: () => commands.getEditorRecordingTarget(),
+	staleTime: Number.POSITIVE_INFINITY,
+});
+
 export const isSystemAudioSupported = queryOptions({
 	queryKey: ["systemAudioSupported"] as const,
 	queryFn: () => commands.isSystemAudioCaptureSupported(),
@@ -153,7 +155,7 @@ export const isSystemAudioSupported = queryOptions({
 
 type CameraCaptureTarget = ScreenCaptureTarget | { variant: "cameraOnly" };
 type ExtendedRecordingTargetMode = RecordingTargetMode | "camera" | null;
-type RecordingTargetModeSource = "main" | "editor" | "editorRecording" | null;
+type RecordingTargetModeSource = "main" | null;
 /**
  * Why the target picker was last dismissed. Written in the same `setOptions`
  * call that sets `targetMode: null`, so it reaches other webviews atomically
@@ -168,6 +170,19 @@ export type TargetModeDismissal =
 	| "screenshot"
 	| "superseded"
 	| "cancelled";
+
+function isStoredCameraId(value: unknown): value is DeviceOrModelID | null {
+	if (value === null) return true;
+	if (typeof value !== "object" || Object.keys(value).length !== 1)
+		return false;
+	if ("DeviceID" in value) {
+		return typeof value.DeviceID === "string" && value.DeviceID.length > 0;
+	}
+	if ("ModelID" in value) {
+		return typeof value.ModelID === "string" && value.ModelID.includes(":");
+	}
+	return false;
+}
 
 export function createOptionsQuery() {
 	const PERSIST_KEY = "recording-options-query-2";
@@ -191,57 +206,65 @@ export function createOptionsQuery() {
 		organizationId: null,
 	});
 
+	let microphoneRevision = 0;
+	let cameraRevision = 0;
+	const markInputChanges = (update: unknown) => {
+		if (
+			update === "micName" ||
+			(typeof update === "object" && update !== null && "micName" in update)
+		)
+			microphoneRevision++;
+		if (
+			update === "cameraID" ||
+			(typeof update === "object" && update !== null && "cameraID" in update)
+		)
+			cameraRevision++;
+	};
 	createEventListener(window, "storage", (e) => {
-		if (e.key === PERSIST_KEY) _setState(JSON.parse(e.newValue ?? "{}"));
+		if (e.key === PERSIST_KEY) {
+			const update: unknown = JSON.parse(e.newValue ?? "{}");
+			if (typeof update === "object" && update !== null) {
+				const options =
+					"cameraID" in update
+						? {
+								...update,
+								cameraID: isStoredCameraId(update.cameraID)
+									? update.cameraID
+									: null,
+							}
+						: update;
+				markInputChanges(options);
+				_setState(options);
+			}
+		}
 	});
 
 	let initialized = false;
 
-	const localStateSnapshot = (): RecordingOptionsLocalState => ({
-		captureTarget: _state.captureTarget,
-		micName: _state.micName,
-		mode: _state.mode,
-		captureSystemAudio: _state.captureSystemAudio,
-		cameraID: _state.cameraID,
-		organizationId: _state.organizationId,
-	});
-
-	const applyStoreData = (data: Parameters<
-		typeof recordingOptionsPatchFromStore
-	>[0]) => {
-		const patch = recordingOptionsPatchFromStore(data, localStateSnapshot());
-		if (!patch) return false;
-		batch(() => {
-			if (patch.captureTarget !== undefined) {
-				_setState("captureTarget", patch.captureTarget);
-			}
-			if (patch.micName !== undefined) {
-				_setState("micName", patch.micName);
-			}
-			if (patch.cameraID !== undefined) {
-				_setState("cameraID", patch.cameraID);
-			}
-			if (patch.mode !== undefined) {
-				_setState("mode", patch.mode);
-			}
-			if (patch.captureSystemAudio !== undefined) {
-				_setState("captureSystemAudio", patch.captureSystemAudio);
-			}
-			if (patch.organizationId !== undefined) {
-				_setState("organizationId", patch.organizationId);
-			}
-		});
-		return true;
-	};
-
-	const refreshFromStore = async () => {
-		const data = await recordingSettingsStore.get();
-		applyStoreData(data);
-	};
-
 	recordingSettingsStore.get().then((data) => {
 		batch(() => {
-			applyStoreData(data);
+			if (data?.target) {
+				_setState("captureTarget", data.target);
+			}
+			if (data?.micName !== undefined && microphoneRevision === 0) {
+				_setState("micName", data.micName);
+			}
+			if (
+				data?.cameraId !== undefined &&
+				cameraRevision === 0 &&
+				isStoredCameraId(data.cameraId)
+			) {
+				_setState("cameraID", reconcile(data.cameraId));
+			}
+			if (data?.mode && data.mode !== _state.mode) {
+				_setState("mode", data.mode);
+			}
+			if (data?.systemAudio !== undefined) {
+				_setState("captureSystemAudio", data.systemAudio);
+			}
+			if (data?.organizationId !== undefined) {
+				_setState("organizationId", data.organizationId);
+			}
 			initialized = true;
 		});
 	});
@@ -257,24 +280,67 @@ export function createOptionsQuery() {
 		};
 
 		if (initialized) {
-			void recordingSettingsStore.set(settings);
+			recordingSettingsStore.set(settings);
 		}
 	});
 
 	const storeListenerCleanup = recordingSettingsStore.listen((data) => {
-		applyStoreData(data);
+		if (data?.mode && data.mode !== _state.mode) {
+			_setState("mode", data.mode);
+		}
 	});
 	onCleanup(() => storeListenerCleanup.then((c) => c()));
 
 	const [state, setState] = makePersisted([_state, _setState], {
 		name: PERSIST_KEY,
 	});
+	if (state.cameraID !== undefined && !isStoredCameraId(state.cameraID)) {
+		setState("cameraID", null);
+	}
 
+	const setOptions = new Proxy(setState, {
+		apply(target, thisArg, args) {
+			markInputChanges(args[0]);
+			return Reflect.apply(target, thisArg, args);
+		},
+	});
+	const refreshFromStore = async () => {
+		const data = await recordingSettingsStore.get();
+		if (!data) return;
+		batch(() => {
+			if (data.target) _setState("captureTarget", data.target);
+			if (data.micName !== undefined) _setState("micName", data.micName);
+			if (data.cameraId !== undefined && isStoredCameraId(data.cameraId))
+				_setState("cameraID", reconcile(data.cameraId));
+			if (data.mode) _setState("mode", data.mode);
+			if (data.systemAudio !== undefined)
+				_setState("captureSystemAudio", data.systemAudio);
+			if (data.organizationId !== undefined)
+				_setState("organizationId", data.organizationId);
+		});
+	};
 	return {
 		rawOptions: state,
-		setOptions: setState,
+		setOptions,
+		getCameraRevision: () => cameraRevision,
 		refreshFromStore,
 	};
+}
+
+export function createCleanCaptureQuery() {
+	const query = createQuery(() => ({
+		queryKey: ["cleanCapture"] as const,
+		queryFn: () => commands.getCleanCaptureState(),
+		refetchOnWindowFocus: true,
+	}));
+	createQueryInvalidate(query, "currentRecordingChanged");
+	return query;
+}
+
+export async function revealRecordingWindow(generation?: number) {
+	const currentGeneration =
+		generation ?? (await commands.getCleanCaptureState()).generation;
+	return commands.revealCaptureWindow(currentGeneration, null);
 }
 
 export function createCurrentRecordingQuery() {
@@ -293,12 +359,7 @@ export function createLicenseQuery() {
 			const auth = await authStore.get();
 
 			if (auth?.plan)
-				return {
-					type: "pro" as const,
-					upgraded: true,
-					manual: auth.plan.manual,
-					last_checked: auth.plan.last_checked,
-				};
+				return { type: "pro" as const, ...auth.plan, upgraded: true };
 			if (auth)
 				return {
 					type: "pro" as const,
@@ -312,7 +373,12 @@ export function createLicenseQuery() {
 					...settings.commercialLicense,
 					instanceId: settings.instanceId,
 				};
-			return { type: "pro" as const, upgraded: true, manual: false, last_checked: 0 };
+			return {
+				type: "pro" as const,
+				upgraded: true,
+				manual: false,
+				last_checked: 0,
+			};
 		},
 	}));
 
@@ -329,6 +395,29 @@ export function createLicenseQuery() {
 	return query;
 }
 
+function inputRequestWasSuperseded(error: unknown) {
+	return String(error).includes("selection was superseded by a newer request");
+}
+
+export function createMicrophoneMutation() {
+	const { setOptions, rawOptions } = useRecordingOptions();
+	return useMutation(() => ({
+		mutationFn: async (name: string | null) => {
+			setOptions("micName", name);
+			try {
+				await commands.setMicInput(name);
+			} catch (error) {
+				if (
+					(rawOptions.micName ?? null) !== name ||
+					inputRequestWasSuperseded(error)
+				)
+					return;
+				throw error;
+			}
+		},
+	}));
+}
+
 export function createCameraMutation() {
 	const { setOptions, rawOptions } = useRecordingOptions();
 
@@ -336,36 +425,23 @@ export function createCameraMutation() {
 		model: DeviceOrModelID | null,
 		skipCameraWindow?: boolean,
 	) => {
-		const before = rawOptions.cameraID ? { ...rawOptions.cameraID } : null;
 		setOptions("cameraID", reconcile(model));
-		await commands
-			.setCameraInput(model, skipCameraWindow ?? null)
-			.catch(async (e) => {
-				const message =
-					typeof e === "string"
-						? e
-						: e instanceof Error
-							? e.message
-							: String(e);
+		try {
+			await commands.setCameraInput(model, skipCameraWindow ?? null);
+		} catch (error) {
+			if (
+				JSON.stringify(rawOptions.cameraID ?? null) !== JSON.stringify(model) ||
+				inputRequestWasSuperseded(error)
+			)
+				return;
+			throw error;
+		}
 
-				if (
-					message.includes("DeviceNotFound") ||
-					message.includes("CameraTimeout") ||
-					message.includes("Failed to initialize camera")
-				) {
-					setOptions("cameraID", null);
-					console.warn("Selected camera is unavailable.");
-					return;
-				}
-
-				if (JSON.stringify(before) === JSON.stringify(model) || !before) {
-					setOptions("cameraID", null);
-				} else setOptions("cameraID", reconcile(before));
-
-				throw e;
-			});
-
-		if (model && !skipCameraWindow) {
+		if (
+			model &&
+			!skipCameraWindow &&
+			JSON.stringify(rawOptions.cameraID) === JSON.stringify(model)
+		) {
 			getCurrentWindow().setFocus();
 		}
 	};
