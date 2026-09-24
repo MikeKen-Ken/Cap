@@ -2283,7 +2283,7 @@ async fn start_recording_prepared(
 
     let (video_upload_info, instant_mode_max_resolution) = match inputs.mode {
         RecordingMode::Instant => {
-            let Some(auth) = instant_auth else {
+            let Some(_auth) = instant_auth else {
                 let error = "Please sign in to use instant recording".to_string();
                 state_mtx.write().await.clear_pending_recording();
                 notify_recording_start_failed(&app, &error);

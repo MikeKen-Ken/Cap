@@ -78,7 +78,8 @@ impl AuthStore {
             Ok(response) if response.status().is_success() => {
                 #[derive(Deserialize)]
                 struct PlanResponse {
-                    upgraded: bool,
+                    #[serde(rename = "upgraded")]
+                    _upgraded: bool,
                 }
                 match response.json::<PlanResponse>().await {
                     Ok(_plan_response) => {

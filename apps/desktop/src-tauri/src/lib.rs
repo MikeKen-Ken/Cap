@@ -137,7 +137,6 @@ use tokio::sync::{Mutex, RwLock, oneshot, watch};
 use tracing::*;
 use upload::{create_or_get_video, upload_screenshot_bytes, upload_screenshot_file, upload_video};
 use web_api::AuthedApiError;
-use web_api::ManagerExt as WebManagerExt;
 #[cfg(target_os = "macos")]
 use windows::hide_overlay;
 use windows::{

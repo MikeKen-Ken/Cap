@@ -1,3 +1,4 @@
+import { Button } from "@cap/ui-solid";
 import { cx } from "cva";
 import {
 	createMemo,
@@ -8,7 +9,7 @@ import {
 	Show,
 } from "solid-js";
 import toast from "solid-toast";
-import { generalSettingsStore } from "~/store";
+import { authStore, generalSettingsStore } from "~/store";
 import {
 	deriveGeneralSettings,
 	type GeneralSettingsStore,
@@ -73,6 +74,7 @@ const INSTANT_OPTIONS = [
 ];
 
 export default function RecordingQualitySettings() {
+	const auth = authStore.createQuery();
 	const store = generalSettingsStore.createQuery();
 	const settings = createMemo(() => deriveGeneralSettings(store.data));
 	const studioQuality = createMemo(
