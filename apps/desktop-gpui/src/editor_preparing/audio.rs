@@ -174,12 +174,18 @@ mod tests {
 
     impl TestDirectory {
         fn new() -> Self {
-            let nonce = std::time::SystemTime::now()
+            use std::sync::atomic::{AtomicU64, Ordering};
+
+            // macOS CI's clock repeats inside one parallel `cargo test` process,
+            // so a time-only directory name fails with EEXIST.
+            static NEXT: AtomicU64 = AtomicU64::new(0);
+            let nonce = NEXT.fetch_add(1, Ordering::Relaxed);
+            let stamp = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos();
             let path = std::env::temp_dir().join(format!(
-                "cap-gpui-preparing-audio-{}-{nonce}",
+                "cap-gpui-preparing-audio-{}-{stamp}-{nonce}",
                 std::process::id()
             ));
             std::fs::create_dir(&path).unwrap();
@@ -279,6 +285,25 @@ mod tests {
             metadata.project_path
         );
         assert_eq!(serde_json::to_value(&metadata).unwrap(), before);
+    }
+
+    #[test]
+    fn parallel_preparing_directories_stay_unique() {
+        let directories: Vec<_> = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..32).map(|_| scope.spawn(TestDirectory::new)).collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().unwrap())
+                .collect()
+        });
+        let mut paths: Vec<_> = directories
+            .iter()
+            .map(|directory| directory.0.clone())
+            .collect();
+        paths.sort();
+        let count = paths.len();
+        paths.dedup();
+        assert_eq!(paths.len(), count);
     }
 
     #[test]

@@ -85,7 +85,6 @@ const ICONS: &[(&str, &[u8])] = assets!("icons":
     "laptop.svg",
     "shuffle.svg",
     "gift.svg",
-    "history.svg",
     "hotkeys.svg",
     "image.svg",
     "info.svg",
@@ -99,7 +98,6 @@ const ICONS: &[(&str, &[u8])] = assets!("icons":
     "message-square-plus.svg",
     "mic-off.svg",
     "microphone.svg",
-    "minimize.svg",
     "minus.svg",
     "monitor.svg",
     "more-vertical.svg",
@@ -186,10 +184,9 @@ const ICONS: &[(&str, &[u8])] = assets!("icons":
     "copy.svg",
     "record-fill.svg",
     "warning-bold.svg",
-    // The main window's hand-drawn traffic lights: the x and expand glyphs
+    // The main window's hand-drawn close light: the x glyph
     // `CaptionControlsMacOS.tsx` inlines, shown while the group is hovered.
     "traffic-close.svg",
-    "traffic-zoom.svg",
     // The remaining settings pages (`settings_pages.rs`). `circle-check` is
     // Cap's own (`packages/ui-solid/icons/circle-check.svg`, hotkeys.tsx's
     // IconCapCircleCheck); the rest are the Lucide 24x24 originals the pages'
@@ -296,6 +293,9 @@ mod tests {
         // from, so the table has to scan here too.
         include_str!("library.rs"),
         include_str!("controls_window.rs"),
+        // Windows caption buttons name their glyphs in this module, not in the
+        // windows that host the bar.
+        include_str!("ui/windows_caption.rs"),
         include_str!("camera_window.rs"),
         include_str!("target_overlay.rs"),
         include_str!("settings_window.rs"),
