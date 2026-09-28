@@ -1,0 +1,185 @@
+name: publish-github
+
+# GitHub-release path for repositories other than CapSoftware/Cap. Those forks
+# do not have the CrabNebula, Apple, or SignPath secrets, so the installers
+# are unsigned packages attached to a release in this repository.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version already committed in apps/desktop/src-tauri/Cargo.toml"
+        required: true
+        type: string
+      sha:
+        description: "Commit SHA to build and tag"
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cap-v${{ inputs.version }}
+          target_commitish: ${{ inputs.sha }}
+          name: ${{ inputs.version }}
+          draft: false
+          prerelease: false
+          body: |
+            Desktop ${{ inputs.version }} for this repository.
+
+            The installers are unsigned. macOS Gatekeeper and Windows SmartScreen warn before they open. The macOS build is Apple Silicon only.
+
+            Builds attach the Windows NSIS installer, the Linux .deb, .rpm, and AppImage, and the macOS .dmg to this release when they finish.
+
+  build:
+    needs: release
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            runner: windows-2022
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-24.04
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha }}
+
+      - name: Install Linux desktop dependencies
+        if: ${{ runner.os == 'Linux' }}
+        uses: ./.github/actions/install-desktop-deps
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: ./.github/actions/setup-rust-cache
+        with:
+          target: ${{ matrix.target }}
+          prefix-key: v1-rust-release
+          save-cache: true
+          cache-on-failure: true
+          workspaces: |
+            . -> target
+            apps/desktop-gpui -> target
+
+      - uses: ./.github/actions/setup-js
+
+      - name: Create .env file in root
+        shell: bash
+        env:
+          NEXT_PUBLIC_WEB_URL: ${{ secrets.NEXT_PUBLIC_WEB_URL }}
+        run: |
+          {
+            echo "appVersion=${{ inputs.version }}"
+            echo "VITE_ENVIRONMENT=production"
+            echo "NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL:-https://cap.so}"
+            echo "NEXTAUTH_URL=${NEXT_PUBLIC_WEB_URL:-https://cap.so}"
+            echo "VITE_SERVER_URL=${NEXT_PUBLIC_WEB_URL:-https://cap.so}"
+            echo "RUST_TARGET_TRIPLE=${{ matrix.target }}"
+          } >> .env
+
+      - name: Run cap-setup
+        shell: bash
+        run: bun run cap-setup
+        env:
+          RUST_TARGET_TRIPLE: ${{ matrix.target }}
+
+      - name: Increase swap space (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          sudo swapoff /mnt/swapfile 2>/dev/null || true
+          sudo rm -f /mnt/swapfile
+          sudo fallocate -l 16G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+
+      - name: Increase pagefile size (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        uses: al-cheb/configure-pagefile-action@a3b6ebd6b634da88790d9c58d4b37a7f4a7b8708 # v1.4
+        with:
+          minimum-size: 16GB
+          maximum-size: 24GB
+          disk-root: "D:"
+
+      - name: Build desktop binaries
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            export CARGO_PROFILE_RELEASE_DEBUG=0
+          fi
+          ./scripts/build-desktop-binaries.sh ${{ matrix.target }}
+
+      - name: Build unsigned app
+        working-directory: apps/desktop
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONFIGS=(--config src-tauri/tauri.prod.conf.json --config src-tauri/tauri.unsigned.conf.json)
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            export CARGO_PROFILE_RELEASE_DEBUG=0
+            export LD_LIBRARY_PATH="${GITHUB_WORKSPACE}/target/${{ matrix.target }}/release:${GITHUB_WORKSPACE}/target/native-deps/lib"
+            bun run build:tauri --target ${{ matrix.target }} --bundles deb,rpm,appimage "${CONFIGS[@]}"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            node ../../scripts/build-macos-packages.mjs ${{ matrix.target }} "${CONFIGS[@]}"
+          else
+            bun run build:tauri --target ${{ matrix.target }} --bundles nsis "${CONFIGS[@]}"
+          fi
+        env:
+          CI: false
+          RUST_TARGET_TRIPLE: ${{ matrix.target }}
+
+      - name: Finalize unsigned Linux AppImage
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APPIMAGE="$(find "target/${{ matrix.target }}/release/bundle/appimage" -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
+          if [[ -z "$APPIMAGE" ]]; then
+            echo "::error::Linux AppImage was not produced."
+            exit 1
+          fi
+          node scripts/finalize-linux-appimage.mjs --unsigned "$APPIMAGE"
+
+      - name: Upload Windows installer
+        if: ${{ runner.os == 'Windows' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cap-v${{ inputs.version }}
+          fail_on_unmatched_files: true
+          files: target/${{ matrix.target }}/release/bundle/nsis/*.exe
+
+      - name: Upload Linux packages
+        if: ${{ runner.os == 'Linux' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cap-v${{ inputs.version }}
+          fail_on_unmatched_files: true
+          files: |
+            target/${{ matrix.target }}/release/bundle/deb/*.deb
+            target/${{ matrix.target }}/release/bundle/rpm/*.rpm
+            target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
+
+      - name: Upload macOS disk image
+        if: ${{ runner.os == 'macOS' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cap-v${{ inputs.version }}
+          fail_on_unmatched_files: true
+          files: target/${{ matrix.target }}/release/bundle/dmg/*.dmg

@@ -1,9 +1,9 @@
 name: "publish"
 
 # Stable release entrypoint. Reads the version from Cargo.toml (bump it before
-# dispatching) and hands off to the reusable desktop-release workflow. The
-# CrabNebula release stays a draft; publishing remains the manual step it has
-# always been (Discord bot / CN dashboard).
+# dispatching). CapSoftware/Cap keeps the CrabNebula desktop-release path.
+# Any other repository, including this fork, publishes unsigned installers
+# as assets on a GitHub release in that repository.
 
 on:
   workflow_dispatch:
@@ -29,6 +29,7 @@ jobs:
           field: "package.version"
 
   release:
+    if: github.repository == 'CapSoftware/Cap'
     needs: version
     permissions:
       contents: write
@@ -41,4 +42,15 @@ jobs:
       sha: ${{ github.sha }}
       auto_publish: false
       interactionId: ${{ inputs.interactionId }}
+    secrets: inherit
+
+  github_release:
+    if: github.repository != 'CapSoftware/Cap'
+    needs: version
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish-github.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+      sha: ${{ github.sha }}
     secrets: inherit
