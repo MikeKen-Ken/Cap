@@ -50,6 +50,7 @@ mod recording_telemetry;
 mod recordings_locations;
 mod recovery;
 mod screenshot_editor;
+mod screenshot_freeze;
 mod startup;
 #[cfg(debug_assertions)]
 mod stop_editor_benchmark;
@@ -6887,6 +6888,9 @@ fn specta_builder() -> tauri_specta::Builder {
             target_select_overlay::open_target_select_overlays,
             target_select_overlay::close_target_select_overlays,
             target_select_overlay::target_select_overlay_ready,
+            target_select_overlay::present_screenshot_freeze,
+            screenshot_freeze::screenshot_freeze_preview,
+            screenshot_freeze::save_frozen_area_screenshot,
             target_select_overlay::suspend_target_select_overlays,
             target_select_overlay::update_camera_overlay_bounds,
             target_select_overlay::display_information,
@@ -6934,6 +6938,7 @@ fn specta_builder() -> tauri_specta::Builder {
             RecordingDeleted,
             recordings_locations::RecordingsMigrationProgress,
             target_select_overlay::TargetUnderCursor,
+            screenshot_freeze::ScreenshotFreezeReady,
             hotkeys::OnEscapePress,
             upload::UploadProgressEvent,
             import::VideoImportProgress,
@@ -7226,6 +7231,7 @@ pub async fn run(recording_logging_handle: LoggingHandle, logs_dir: PathBuf) {
             app.manage(http_client::HttpClient::default());
             app.manage(http_client::RetryableHttpClient::default());
             app.manage(PendingScreenshots::default());
+            app.manage(screenshot_freeze::FreezeStore::default());
             app.manage(FinalizingRecordings::default());
             app.manage(editor_preparing::PreparingConsumers::default());
             app.manage(updates::UpdatesState::default());
@@ -7403,6 +7409,7 @@ pub async fn run(recording_logging_handle: LoggingHandle, logs_dir: PathBuf) {
                     gpu_context::prewarm_gpu();
                     tokio::task::spawn_blocking(cap_rendering::prewarm_fonts);
                     tokio::spawn(screenshot_editor::prewarm_screenshot_renderer());
+                    target_select_overlay::prewarm::schedule(app.clone());
 
                     #[cfg(target_os = "macos")]
                     {

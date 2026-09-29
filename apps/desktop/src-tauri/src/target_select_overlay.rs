@@ -28,6 +28,7 @@ use tokio::task::JoinHandle;
 use tracing::{debug, error, instrument};
 
 mod lifecycle;
+pub(crate) mod prewarm;
 
 #[derive(tauri_specta::Event, Serialize, Type, Clone)]
 pub struct TargetUnderCursor {
@@ -121,6 +122,51 @@ pub(crate) async fn open_target_select_overlays_for_session(
         .or_else(|| Display::get_containing_cursor().map(|d| d.id()))
         .unwrap_or_else(|| Display::primary().id());
 
+    let screenshot_area = matches!(target_mode, Some(RecordingTargetMode::Area))
+        && crate::recording_settings::RecordingSettingsStore::get(&app)
+            .ok()
+            .flatten()
+            .and_then(|settings| settings.mode)
+            == Some(cap_recording::RecordingMode::Screenshot);
+
+    if screenshot_area {
+        // Capture before the picker is shown, and keep the webviews hidden until
+        // that frame is on screen. Otherwise a playing video moves between the
+        // picture the user selects and the file that gets saved.
+        crate::hide_main_window(&app);
+        for (id, window) in app.webview_windows() {
+            if matches!(
+                CapWindowId::from_str(&id),
+                Ok(CapWindowId::TargetSelectOverlay { .. })
+            ) && window.is_visible().unwrap_or(false)
+            {
+                hide_overlay(&window);
+            }
+        }
+        let generation = crate::screenshot_freeze::begin(&app);
+        let capture_app = app.clone();
+        let mut capture_ids = display_ids.clone();
+        if let Some(index) = capture_ids
+            .iter()
+            .position(|display_id| display_id == &focus_display_id)
+        {
+            capture_ids.swap(0, index);
+        }
+        let capture_session = picker_session;
+        tokio::spawn(async move {
+            crate::screenshot_freeze::capture_displays(
+                capture_app,
+                capture_ids,
+                generation,
+                capture_session,
+            )
+            .await;
+        });
+        state.pause_reveal();
+    } else {
+        crate::screenshot_freeze::clear(&app);
+    }
+
     for (id, window) in app.webview_windows() {
         if let Ok(CapWindowId::TargetSelectOverlay {
             display_id: existing_id,
@@ -132,6 +178,14 @@ pub(crate) async fn open_target_select_overlays_for_session(
             hide_overlay(&window);
             state.destroy(&existing_id, app.global_shortcut());
         }
+    }
+
+    if let Some(mode) = target_mode {
+        let _ = crate::RequestSetTargetMode {
+            target_mode: Some(mode),
+            display_id: None,
+        }
+        .emit(&app);
     }
 
     for display_id in &display_ids {
@@ -146,10 +200,12 @@ pub(crate) async fn open_target_select_overlays_for_session(
         .get(&app);
 
         if let Some(window) = existing_window {
-            request_overlay_reveal(&window, picker_session, should_focus);
+            if !screenshot_area {
+                request_overlay_reveal(&window, picker_session, should_focus);
 
-            if should_focus {
-                focus_target_select_overlay(&window, picker_session);
+                if should_focus {
+                    focus_target_select_overlay(&window, picker_session);
+                }
             }
 
             state.spawn(display_id, window.clone(), picker_session);
@@ -178,6 +234,10 @@ pub(crate) async fn open_target_select_overlays_for_session(
                 }
             });
         }
+    }
+
+    if screenshot_area && state.picker_is_current(picker_session) {
+        state.resume_reveal();
     }
 
     let focus_window = CapWindowId::TargetSelectOverlay {
@@ -444,6 +504,25 @@ pub fn target_select_overlay_ready(window: WebviewWindow, instance: u32) {
     mark_overlay_ready(&window, instance, true);
 }
 
+#[tauri::command]
+#[specta::specta]
+pub fn present_screenshot_freeze(window: WebviewWindow, instance: u32) {
+    mark_overlay_ready(&window, instance, true);
+    let Some(session) = window
+        .app_handle()
+        .state::<WindowFocusManager>()
+        .picker_session()
+    else {
+        return;
+    };
+    let focus = matches!(
+        CapWindowId::from_str(window.label()),
+        Ok(CapWindowId::TargetSelectOverlay { display_id })
+            if Display::get_containing_cursor().map(|display| display.id()) == Some(display_id)
+    );
+    request_overlay_reveal(&window, session, focus);
+}
+
 fn should_skip_window(window: &Window, exclusions: &[WindowExclusion]) -> bool {
     if exclusions.is_empty() {
         return false;
@@ -564,6 +643,9 @@ pub fn close_target_select_overlay_windows(app: &AppHandle) {
     if !saw_overlay && let Some(state) = state {
         state.shutdown(app);
     }
+
+    crate::screenshot_freeze::clear(app);
+    prewarm::schedule(app.clone());
 }
 
 pub(crate) fn dismiss_picker_from_escape(app: &AppHandle) {
@@ -698,6 +780,7 @@ pub async fn focus_window(window_id: WindowId) -> Result<(), String> {
 pub struct WindowFocusManager {
     lifecycle: Mutex<lifecycle::Lifecycle>,
     pub(crate) creation: tokio::sync::Mutex<()>,
+    prewarm: tokio::sync::Mutex<()>,
     task: Mutex<Option<JoinHandle<()>>>,
     tasks: Mutex<HashMap<String, JoinHandle<()>>>,
     escape_registered: Mutex<bool>,
@@ -752,6 +835,20 @@ impl WindowFocusManager {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .suspend_all();
+    }
+
+    pub(crate) fn pause_reveal(&self) {
+        self.lifecycle
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .pause_reveal();
+    }
+
+    pub(crate) fn resume_reveal(&self) {
+        self.lifecycle
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .resume_reveal();
     }
 
     fn abort_all_tasks(&self) {

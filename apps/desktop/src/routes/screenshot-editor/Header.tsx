@@ -14,6 +14,7 @@ import IconLucideCopy from "~icons/lucide/copy";
 import IconLucideFolder from "~icons/lucide/folder";
 import IconLucideLink from "~icons/lucide/link";
 import IconLucideMoreHorizontal from "~icons/lucide/more-horizontal";
+import IconLucidePin from "~icons/lucide/pin";
 import IconLucideSave from "~icons/lucide/save";
 import { AnnotationTools } from "./AnnotationTools";
 import { useScreenshotEditorContext } from "./context";
@@ -44,7 +45,8 @@ export function Header() {
 	} = ctx;
 	const path = () => ctx.editorInstance()?.path ?? "";
 
-	const { exportImage, exportStatus, isExporting } = useScreenshotExport();
+	const { exportImage, pinImage, exportStatus, isExporting } =
+		useScreenshotExport();
 
 	createEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -141,6 +143,13 @@ export function Header() {
 				)}
 			>
 				<div class="w-px h-6 bg-gray-4 mx-1" />
+
+				<EditorButton
+					tooltipText="Pin to Screen"
+					onClick={pinImage}
+					disabled={isExporting()}
+					leftIcon={<IconLucidePin class="size-4" />}
+				/>
 
 				<EditorButton
 					onClick={() => {

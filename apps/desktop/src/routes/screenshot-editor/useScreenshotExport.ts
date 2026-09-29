@@ -2,6 +2,7 @@ import { writeFile } from "@tauri-apps/plugin-fs";
 import { createSignal, onCleanup } from "solid-js";
 import { unwrap } from "solid-js/store";
 import toast from "solid-toast";
+import { openPinnedImage } from "~/utils/pin-window";
 import { commands } from "~/utils/tauri";
 import { useScreenshotEditorContext } from "./context";
 import {
@@ -258,5 +259,28 @@ export function useScreenshotExport() {
 		}
 	};
 
-	return { exportImage, exportStatus, isExporting };
+	const pinImage = async () => {
+		if (disposed || isExporting()) return;
+
+		setIsExporting(true);
+		try {
+			setExportStatus("rendering");
+			const outputCanvas = await renderExportCanvas();
+			setExportStatus("encoding");
+			const blob = await canvasToBlob(outputCanvas, "image/png");
+			await openPinnedImage(blob, {
+				width: outputCanvas.width,
+				height: outputCanvas.height,
+			});
+		} catch (err) {
+			console.error(err);
+			const message = err instanceof Error ? err.message : String(err);
+			toast.error(message || "Failed to pin screenshot");
+		} finally {
+			setExportStatus("idle");
+			setIsExporting(false);
+		}
+	};
+
+	return { exportImage, pinImage, exportStatus, isExporting };
 }

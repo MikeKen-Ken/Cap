@@ -528,6 +528,15 @@ async closeTargetSelectOverlays() : Promise<null> {
 async targetSelectOverlayReady(instance: number) : Promise<void> {
     await TAURI_INVOKE("target_select_overlay_ready", { instance });
 },
+async presentScreenshotFreeze(instance: number) : Promise<void> {
+    await TAURI_INVOKE("present_screenshot_freeze", { instance });
+},
+async screenshotFreezePreview(displayId: string) : Promise<string | null> {
+    return await TAURI_INVOKE("screenshot_freeze_preview", { displayId });
+},
+async saveFrozenAreaScreenshot(target: ScreenCaptureTarget) : Promise<string> {
+    return await TAURI_INVOKE("save_frozen_area_screenshot", { target });
+},
 async suspendTargetSelectOverlays() : Promise<void> {
     await TAURI_INVOKE("suspend_target_select_overlays");
 },
@@ -619,6 +628,7 @@ requestScreenCapturePrewarm: RequestScreenCapturePrewarm,
 requestScrollToSettingsSection: RequestScrollToSettingsSection,
 requestSetTargetMode: RequestSetTargetMode,
 requestStartRecording: RequestStartRecording,
+screenshotFreezeReady: ScreenshotFreezeReady,
 setCaptureAreaPending: SetCaptureAreaPending,
 targetUnderCursor: TargetUnderCursor,
 updateDownloadProgress: UpdateDownloadProgress,
@@ -654,6 +664,7 @@ requestScreenCapturePrewarm: "request-screen-capture-prewarm",
 requestScrollToSettingsSection: "request-scroll-to-settings-section",
 requestSetTargetMode: "request-set-target-mode",
 requestStartRecording: "request-start-recording",
+screenshotFreezeReady: "screenshot-freeze-ready",
 setCaptureAreaPending: "set-capture-area-pending",
 targetUnderCursor: "target-under-cursor",
 updateDownloadProgress: "update-download-progress",
@@ -1251,6 +1262,7 @@ export type SceneMode = "default" | "cameraOnly" | "hideCamera" | "splitScreen" 
 export type SceneSegment = { start: number; end: number; mode?: SceneMode; splitLayout?: SplitLayout | null; transitionIn?: number; transitionOut?: number }
 export type ScreenCaptureTarget = { variant: "window"; id: WindowId } | { variant: "display"; id: DisplayId } | { variant: "area"; screen: DisplayId; bounds: LogicalBounds } | { variant: "cameraOnly" }
 export type ScreenMovementSpring = { stiffness: number; damping: number; mass: number }
+export type ScreenshotFreezeReady = { display_id: string }
 export type ScreenshotMetaWithMetadata = ((StudioRecordingMeta | InstantRecordingMeta) & { platform?: Platform | null; pretty_name: string; sharing?: SharingMeta | null; upload?: UploadMeta | null }) & { sort_time_millis: number }
 export type ScreenshotOcrLine = { text: string; confidence: number | null; bounds: ScreenshotOcrRegion }
 export type ScreenshotOcrRegion = { x: number; y: number; width: number; height: number }

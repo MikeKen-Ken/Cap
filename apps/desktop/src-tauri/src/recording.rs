@@ -5375,25 +5375,7 @@ pub async fn take_screenshot(
     app: AppHandle,
     target: ScreenCaptureTarget,
 ) -> Result<PathBuf, String> {
-    use crate::NewScreenshotAdded;
-    use crate::notifications;
-    use crate::{PendingScreenshot, PendingScreenshots};
     use cap_recording::screenshot::capture_screenshot;
-    use image::ImageEncoder;
-    use std::time::Instant;
-
-    let general_settings = GeneralSettingsStore::get(&app).ok().flatten();
-    let general_settings = general_settings.as_ref();
-
-    let project_name = format_project_name(
-        general_settings
-            .and_then(|s| s.default_project_name_template.clone())
-            .as_deref(),
-        target.title().as_deref().unwrap_or("Unknown"),
-        target.kind_str(),
-        RecordingMode::Screenshot,
-        None,
-    );
 
     let mut hid_any = false;
     for (label, window) in app.webview_windows() {
@@ -5416,11 +5398,37 @@ pub async fn take_screenshot(
         tokio::time::sleep(std::time::Duration::from_millis(150)).await;
     }
 
-    let automation_target = target.clone();
-
-    let image = capture_screenshot(target)
+    let image = capture_screenshot(target.clone())
         .await
         .map_err(|e| format!("Failed to capture screenshot: {e}"))?;
+
+    persist_captured_screenshot(app, image, target).await
+}
+
+pub(crate) async fn persist_captured_screenshot(
+    app: AppHandle,
+    image: image::DynamicImage,
+    target: ScreenCaptureTarget,
+) -> Result<PathBuf, String> {
+    use crate::NewScreenshotAdded;
+    use crate::notifications;
+    use crate::{PendingScreenshot, PendingScreenshots};
+    use image::ImageEncoder;
+    use std::time::Instant;
+
+    let general_settings = GeneralSettingsStore::get(&app).ok().flatten();
+    let general_settings = general_settings.as_ref();
+
+    let project_name = format_project_name(
+        general_settings
+            .and_then(|s| s.default_project_name_template.clone())
+            .as_deref(),
+        target.title().as_deref().unwrap_or("Unknown"),
+        target.kind_str(),
+        RecordingMode::Screenshot,
+        None,
+    );
+    let automation_target = target;
 
     AppSounds::Notification.play();
 

@@ -1321,6 +1321,45 @@ pub async fn capture_screenshot(target: ScreenCaptureTarget) -> anyhow::Result<D
     Ok(finalize_screenshot(final_image, &target))
 }
 
+pub fn crop_captured_area(
+    image: DynamicImage,
+    target: &ScreenCaptureTarget,
+) -> anyhow::Result<DynamicImage> {
+    let image = image.into_rgb8();
+    let ScreenCaptureTarget::Area { bounds, screen } = target else {
+        return Ok(finalize_screenshot(image, target));
+    };
+
+    let display =
+        scap_targets::Display::from_id(screen).ok_or_else(|| anyhow!("Display not found"))?;
+    let logical = display
+        .logical_size()
+        .ok_or_else(|| anyhow!("Logical size not found"))?;
+    if logical.width() <= 0.0 || logical.height() <= 0.0 {
+        return Err(anyhow!("Display logical size invalid"));
+    }
+
+    let scale_x = f64::from(image.width()) / logical.width();
+    let scale_y = f64::from(image.height()) / logical.height();
+    let x = (bounds.position().x() * scale_x).max(0.0) as u32;
+    let y = (bounds.position().y() * scale_y).max(0.0) as u32;
+    let width = (bounds.size().width() * scale_x) as u32;
+    let height = (bounds.size().height() * scale_y) as u32;
+
+    let img_width = image.width();
+    let img_height = image.height();
+    let x = x.min(img_width);
+    let y = y.min(img_height);
+    let width = width.min(img_width.saturating_sub(x));
+    let height = height.min(img_height.saturating_sub(y));
+    if width == 0 || height == 0 {
+        return Ok(finalize_screenshot(image, target));
+    }
+
+    let cropped = image::imageops::crop_imm(&image, x, y, width, height).to_image();
+    Ok(finalize_screenshot(cropped, target))
+}
+
 fn finalize_screenshot(image: RgbImage, target: &ScreenCaptureTarget) -> DynamicImage {
     if matches!(target, ScreenCaptureTarget::Window { .. }) {
         DynamicImage::ImageRgba8(apply_window_rounded_corners(image, target))

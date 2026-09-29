@@ -86,6 +86,19 @@ impl Lifecycle {
         }
     }
 
+    /// Keep overlay windows from being shown. Area screenshots use this so the
+    /// transparent picker cannot appear before its frozen frame is painted.
+    pub fn pause_reveal(&mut self) {
+        self.accepting_requests = false;
+        for window in self.windows.values_mut() {
+            window.requested = false;
+        }
+    }
+
+    pub fn resume_reveal(&mut self) {
+        self.accepting_requests = true;
+    }
+
     pub fn restore(&mut self, label: &str, session: u32, focus: bool) -> Option<Reveal> {
         if !self.is_current(session) {
             return None;
@@ -226,6 +239,20 @@ mod tests {
         assert!(lifecycle.focus("overlay", session, true).is_none());
         let restored = lifecycle.request("overlay", session, true).unwrap();
         assert_eq!(lifecycle.may_reveal("overlay", restored), Some(true));
+    }
+
+    #[test]
+    fn paused_reveal_stays_hidden_until_resume_and_request() {
+        let mut lifecycle = Lifecycle::default();
+        let session = lifecycle.begin();
+        lifecycle.pause_reveal();
+        let instance = lifecycle.register("overlay", session).unwrap();
+        lifecycle.ready("overlay", instance, true).unwrap();
+        lifecycle.ready("overlay", instance, false).unwrap();
+        assert!(lifecycle.request("overlay", session, true).is_none());
+        lifecycle.resume_reveal();
+        let reveal = lifecycle.request("overlay", session, true).unwrap();
+        assert_eq!(lifecycle.may_reveal("overlay", reveal), Some(true));
     }
 
     #[test]

@@ -93,6 +93,7 @@ const InProgressRecordingPage = lazy(
 	() => import("./routes/in-progress-recording"),
 );
 const ModeSelectPage = lazy(() => import("./routes/mode-select"));
+const PinPage = lazy(() => import("./routes/pin"));
 const NotificationsPage = lazy(() => import("./routes/notifications"));
 const RecordingsOverlayPage = lazy(() => import("./routes/recordings-overlay"));
 const ScreenshotEditorPage = lazy(() => import("./routes/screenshot-editor"));
@@ -250,6 +251,11 @@ function Inner() {
 						component={InProgressRecordingPage}
 					/>
 					<Route path="/mode-select" component={ModeSelectPage} />
+					<Route
+						path="/pin"
+						info={{ AUTO_SHOW_WINDOW: false }}
+						component={PinPage}
+					/>
 					<Route path="/notifications" component={NotificationsPage} />
 					<Route path="/recordings-overlay" component={RecordingsOverlayPage} />
 					<Route
