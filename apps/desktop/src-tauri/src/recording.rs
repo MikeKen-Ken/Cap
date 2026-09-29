@@ -5548,6 +5548,8 @@ pub async fn take_screenshot(
                 .emit(&app_handle);
 
                 {
+                    #[cfg(not(target_os = "linux"))]
+                    use clipboard_rs::Clipboard;
                     use clipboard_rs::common::RustImage;
 
                     let image_path_str = image_path_for_emit.to_string_lossy().into_owned();
