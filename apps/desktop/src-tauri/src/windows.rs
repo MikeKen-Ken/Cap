@@ -1931,7 +1931,6 @@ impl ShowCapWindow {
                     .maximized(false)
                     .maximizable(false)
                     .minimizable(false)
-                    .always_on_top(true)
                     .visible_on_all_workspaces(true)
                     .content_protected(should_protect)
                     .transparent(true)

@@ -12,7 +12,6 @@ import {
 	Suspense,
 } from "solid-js";
 import toast from "solid-toast";
-import { SignInButton } from "~/components/SignInButton";
 import {
 	createSelectedOrganization,
 	type DesktopOrganization,
@@ -396,117 +395,113 @@ export function OrganizationDropdown() {
 
 	return (
 		<>
-			<KDropdownMenu gutter={8} placement="bottom">
-				<EditorButton<typeof KDropdownMenu.Trigger>
-					as={KDropdownMenu.Trigger}
-					leftIcon={<IconLucideBuilding2 class="size-4" />}
-					rightIcon={<IconCapChevronDown />}
-					title={triggerLabel()}
-					aria-label={`Organization: ${triggerLabel()}`}
-				>
-					<span class="block max-w-32 truncate max-[1200px]:hidden">
-						{triggerLabel()}
-					</span>
-				</EditorButton>
-				<KDropdownMenu.Portal>
-					<Suspense>
-						<PopperContent<typeof KDropdownMenu.Content>
-							as={KDropdownMenu.Content}
-							class={cx("w-72 max-h-80", topCenterAnimateClasses)}
-						>
-							<Show
-								when={signedIn()}
-								fallback={
-									<div class="p-3">
-										<div class="flex flex-col gap-3">
-											<div class="flex flex-col gap-1">
-												<span class="text-sm font-medium text-ed-text-1">
-													{fallbackTitle()}
-												</span>
-												<span class="text-xs leading-5 text-ed-text-2">
-													{fallbackDescription()}
-												</span>
-											</div>
-											<Show
-												when={
-													organizationSelection.availability() === "signed-out"
-												}
-											>
-												<SignInButton class="w-full justify-center">
-													Sign In
-												</SignInButton>
-											</Show>
-											<Show
-												when={
-													organizationSelection.availability() === "unavailable"
-												}
-											>
-												<Button
-													variant="gray"
-													class="w-full gap-1.5"
-													onClick={retryOrganizations}
-													disabled={organizationSelection.refreshing()}
-												>
-													<IconLucideRefreshCw class="size-4" />
-													Retry
-												</Button>
-											</Show>
-										</div>
-									</div>
-								}
+			<Show when={organizationSelection.availability() !== "signed-out"}>
+				<KDropdownMenu gutter={8} placement="bottom">
+					<EditorButton<typeof KDropdownMenu.Trigger>
+						as={KDropdownMenu.Trigger}
+						leftIcon={<IconLucideBuilding2 class="size-4" />}
+						rightIcon={<IconCapChevronDown />}
+						title={triggerLabel()}
+						aria-label={`Organization: ${triggerLabel()}`}
+					>
+						<span class="block max-w-32 truncate max-[1200px]:hidden">
+							{triggerLabel()}
+						</span>
+					</EditorButton>
+					<KDropdownMenu.Portal>
+						<Suspense>
+							<PopperContent<typeof KDropdownMenu.Content>
+								as={KDropdownMenu.Content}
+								class={cx("w-72 max-h-80", topCenterAnimateClasses)}
 							>
-								<MenuItemList<typeof KDropdownMenu.Group>
-									as={KDropdownMenu.Group}
-									class="max-h-56 overflow-y-auto"
-								>
-									<For
-										each={organizationSelection.organizations()}
-										fallback={
-											<div class="py-1 text-center text-sm text-ed-text-3">
-												No organizations
-											</div>
-										}
-									>
-										{(organization) => (
-											<DropdownItem
-												class="h-10"
-												onSelect={() => selectOrganization(organization)}
-											>
-												<OrganizationAvatar organization={organization} />
-												<span class="min-w-0 flex-1 truncate">
-													{organization.name}
-												</span>
+								<Show
+									when={signedIn()}
+									fallback={
+										<div class="p-3">
+											<div class="flex flex-col gap-3">
+												<div class="flex flex-col gap-1">
+													<span class="text-sm font-medium text-ed-text-1">
+														{fallbackTitle()}
+													</span>
+													<span class="text-xs leading-5 text-ed-text-2">
+														{fallbackDescription()}
+													</span>
+												</div>
 												<Show
-													when={selectedOrganization()?.id === organization.id}
+													when={
+														organizationSelection.availability() ===
+														"unavailable"
+													}
 												>
-													<IconLucideCheck class="size-4 text-ed-accent" />
+													<Button
+														variant="gray"
+														class="w-full gap-1.5"
+														onClick={retryOrganizations}
+														disabled={organizationSelection.refreshing()}
+													>
+														<IconLucideRefreshCw class="size-4" />
+														Retry
+													</Button>
 												</Show>
-											</DropdownItem>
-										)}
-									</For>
-								</MenuItemList>
-								<Show when={selectedOrganization()?.canEditBrand}>
+											</div>
+										</div>
+									}
+								>
 									<MenuItemList<typeof KDropdownMenu.Group>
 										as={KDropdownMenu.Group}
-										class="border-t border-ed-line"
+										class="max-h-56 overflow-y-auto"
 									>
-										<DropdownItem
-											onSelect={() =>
-												setSettingsOrganizationId(
-													selectedOrganization()?.id ?? null,
-												)
+										<For
+											each={organizationSelection.organizations()}
+											fallback={
+												<div class="py-1 text-center text-sm text-ed-text-3">
+													No organizations
+												</div>
 											}
 										>
-											<IconLucidePalette class="size-4" />
-											Brand settings
-										</DropdownItem>
+											{(organization) => (
+												<DropdownItem
+													class="h-10"
+													onSelect={() => selectOrganization(organization)}
+												>
+													<OrganizationAvatar organization={organization} />
+													<span class="min-w-0 flex-1 truncate">
+														{organization.name}
+													</span>
+													<Show
+														when={
+															selectedOrganization()?.id === organization.id
+														}
+													>
+														<IconLucideCheck class="size-4 text-ed-accent" />
+													</Show>
+												</DropdownItem>
+											)}
+										</For>
 									</MenuItemList>
+									<Show when={selectedOrganization()?.canEditBrand}>
+										<MenuItemList<typeof KDropdownMenu.Group>
+											as={KDropdownMenu.Group}
+											class="border-t border-ed-line"
+										>
+											<DropdownItem
+												onSelect={() =>
+													setSettingsOrganizationId(
+														selectedOrganization()?.id ?? null,
+													)
+												}
+											>
+												<IconLucidePalette class="size-4" />
+												Brand settings
+											</DropdownItem>
+										</MenuItemList>
+									</Show>
 								</Show>
-							</Show>
-						</PopperContent>
-					</Suspense>
-				</KDropdownMenu.Portal>
-			</KDropdownMenu>
+							</PopperContent>
+						</Suspense>
+					</KDropdownMenu.Portal>
+				</KDropdownMenu>
+			</Show>
 
 			<BrandSettingsDialog
 				open={settingsOrganizationId() !== null}

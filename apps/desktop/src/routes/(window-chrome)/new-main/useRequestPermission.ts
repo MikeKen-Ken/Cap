@@ -3,6 +3,7 @@ import { TauriEvent, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow, type Window } from "@tauri-apps/api/window";
 import { type as ostype } from "@tauri-apps/plugin-os";
 import { devicesSnapshot } from "~/utils/devices";
+import { isMainWindowPinned } from "~/utils/main-window-pin";
 import { requestAndVerifyPermission } from "~/utils/os-permissions";
 import { commands, type OSPermissionStatus } from "~/utils/tauri";
 
@@ -119,7 +120,7 @@ class PermissionWindow {
 	private async restore() {
 		if (!this.canRestore()) return;
 		if (this.restoring) return this.restoring;
-		this.restoring = this.setAlwaysOnTop(true)
+		this.restoring = this.setAlwaysOnTop(isMainWindowPinned())
 			.then(async () => {
 				if (!this.canRestore()) return;
 				const returnedFromSettings = this.settingsHandoff !== undefined;
@@ -172,7 +173,7 @@ export default function useRequestPermission() {
 				try {
 					await requestAndVerifyPermission(commands, type, currentStatus);
 				} finally {
-					await window.setAlwaysOnTop(true);
+					await window.setAlwaysOnTop(isMainWindowPinned());
 				}
 			}
 			await refreshDevices();

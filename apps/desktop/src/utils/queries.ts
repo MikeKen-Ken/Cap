@@ -16,6 +16,7 @@ import {
 	recordingSettingsStore,
 } from "~/store";
 import { createQueryInvalidate } from "./events";
+import { normalizeRecordingMode } from "./recording-mode";
 import {
 	type CameraInfo,
 	commands,
@@ -256,8 +257,9 @@ export function createOptionsQuery() {
 			) {
 				_setState("cameraID", reconcile(data.cameraId));
 			}
-			if (data?.mode && data.mode !== _state.mode) {
-				_setState("mode", data.mode);
+			if (data?.mode) {
+				const mode = normalizeRecordingMode(data.mode);
+				if (mode !== _state.mode) _setState("mode", mode);
 			}
 			if (data?.systemAudio !== undefined) {
 				_setState("captureSystemAudio", data.systemAudio);
@@ -285,8 +287,9 @@ export function createOptionsQuery() {
 	});
 
 	const storeListenerCleanup = recordingSettingsStore.listen((data) => {
-		if (data?.mode && data.mode !== _state.mode) {
-			_setState("mode", data.mode);
+		if (data?.mode) {
+			const mode = normalizeRecordingMode(data.mode);
+			if (mode !== _state.mode) _setState("mode", mode);
 		}
 	});
 	onCleanup(() => storeListenerCleanup.then((c) => c()));
@@ -296,6 +299,10 @@ export function createOptionsQuery() {
 	});
 	if (state.cameraID !== undefined && !isStoredCameraId(state.cameraID)) {
 		setState("cameraID", null);
+	}
+	if (state.mode === "instant") {
+		setState("mode", "studio");
+		commands.setRecordingMode("studio");
 	}
 
 	const setOptions = new Proxy(setState, {
@@ -312,7 +319,7 @@ export function createOptionsQuery() {
 			if (data.micName !== undefined) _setState("micName", data.micName);
 			if (data.cameraId !== undefined && isStoredCameraId(data.cameraId))
 				_setState("cameraID", reconcile(data.cameraId));
-			if (data.mode) _setState("mode", data.mode);
+			if (data.mode) _setState("mode", normalizeRecordingMode(data.mode));
 			if (data.systemAudio !== undefined)
 				_setState("captureSystemAudio", data.systemAudio);
 			if (data.organizationId !== undefined)

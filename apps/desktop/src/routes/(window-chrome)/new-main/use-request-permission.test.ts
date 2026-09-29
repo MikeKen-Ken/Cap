@@ -38,6 +38,8 @@ vi.mock("@tauri-apps/api/window", () => ({
 
 vi.mock("@tauri-apps/plugin-os", () => ({ type: () => fixture.os }));
 
+vi.mock("~/utils/main-window-pin", () => ({ isMainWindowPinned: () => true }));
+
 vi.mock("~/utils/tauri", () => ({
 	commands: fixture.commands,
 }));

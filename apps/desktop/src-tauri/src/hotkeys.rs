@@ -84,6 +84,27 @@ impl HotkeysStore {
 
         serde_json::from_value(store).map_err(|e| e.to_string())
     }
+
+    fn with_defaults() -> Self {
+        Self {
+            hotkeys: HashMap::from([(
+                HotkeyAction::ScreenshotArea,
+                Hotkey {
+                    code: Code::KeyS,
+                    meta: false,
+                    ctrl: false,
+                    alt: false,
+                    shift: true,
+                },
+            )]),
+        }
+    }
+
+    fn persist(&self, app: &AppHandle) -> Result<(), String> {
+        let store = app.store("store").map_err(|e| e.to_string())?;
+        store.set("hotkeys", serde_json::json!(self));
+        store.save().map_err(|e| e.to_string())
+    }
 }
 
 #[derive(Serialize, Type, tauri_specta::Event, Debug, Clone)]
@@ -326,7 +347,13 @@ pub fn init(app: &AppHandle) {
 
     let store = match HotkeysStore::get(app) {
         Ok(Some(s)) => s,
-        Ok(None) => HotkeysStore::default(),
+        Ok(None) => {
+            let store = HotkeysStore::with_defaults();
+            if let Err(e) = store.persist(app) {
+                eprintln!("Failed to save default hotkeys: {e}");
+            }
+            store
+        }
         Err(e) => {
             eprintln!("Failed to load hotkeys store: {e}");
             HotkeysStore::default()

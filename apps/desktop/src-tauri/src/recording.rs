@@ -5547,6 +5547,22 @@ pub async fn take_screenshot(
                 }
                 .emit(&app_handle);
 
+                {
+                    use clipboard_rs::common::RustImage;
+
+                    let image_path_str = image_path_for_emit.to_string_lossy().into_owned();
+                    match clipboard_rs::RustImageData::from_path(&image_path_str) {
+                        Ok(img_data) => {
+                            let clipboard =
+                                app_handle.state::<crate::ArcLock<crate::ClipboardContext>>();
+                            if let Err(e) = clipboard.write().await.set_image(img_data) {
+                                warn!("Failed to copy screenshot to clipboard: {e}");
+                            }
+                        }
+                        Err(e) => warn!("Failed to load screenshot for clipboard: {e}"),
+                    }
+                }
+
                 crate::automation::run_screenshot_automations(
                     app_handle.clone(),
                     image_path_for_emit.clone(),

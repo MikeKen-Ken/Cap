@@ -189,7 +189,6 @@ export function ExportPage() {
 	const [reuploading, setReuploading] = createSignal(false);
 
 	const auth = authStore.createQuery();
-	const signIn = createSignInMutation();
 	const organizationSelection = createSelectedOrganization();
 	const organisations = organizationSelection.organizations;
 
@@ -267,7 +266,7 @@ export function ExportPage() {
 				ret.format = "Mp4";
 		}
 
-		if (disablesLinkExport() && _settings.exportTo === "link")
+		if ((disablesLinkExport() || !auth.data) && _settings.exportTo === "link")
 			ret.exportTo = "file";
 
 		if (shouldUseGifMode()) {
@@ -944,7 +943,9 @@ export function ExportPage() {
 	};
 
 	const destinationOptions = () =>
-		EXPORT_TO_OPTIONS.map((option) => ({
+		EXPORT_TO_OPTIONS.filter(
+			(option) => option.value !== "link" || !!auth.data,
+		).map((option) => ({
 			value: option.value,
 			label:
 				option.value === "link" && meta().sharing ? "Reupload" : option.label,
@@ -1433,68 +1434,39 @@ export function ExportPage() {
 					</div>
 
 					<div class="px-4 pt-3 pb-4 border-t border-ed-line">
-						{settings.exportTo === "link" && !auth.data ? (
-							<button
-								type="button"
-								class={cx(
-									EXPORT_CTA_CLASS,
-									signIn.isPending
-										? "bg-ed-ctl text-ed-text-1 hover:bg-ed-ctl-hover"
-										: "bg-ed-accent text-white hover:bg-ed-accent-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
-								)}
-								onClick={() => {
-									if (signIn.isPending) {
-										signIn.variables?.abort();
-										signIn.reset();
-									} else {
-										signIn.mutate(new AbortController());
-									}
-								}}
-							>
-								{signIn.isPending ? (
-									"Cancel Sign In"
-								) : (
-									<>
-										<IconCapLink class="size-4" />
-										Sign in to share
-									</>
-								)}
-							</button>
-						) : (
-							<button
-								type="button"
-								class={cx(
-									EXPORT_CTA_CLASS,
-									"bg-ed-accent text-white hover:bg-ed-accent-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
-								)}
-								onClick={() => {
-									if (settings.exportTo === "file") save.mutate();
-									else if (settings.exportTo === "link") upload.mutate();
-									else copy.mutate();
-								}}
-							>
-								{settings.exportTo === "file" && (
-									<>
-										<IconCapFile class="size-4" />
-										Export to File
-									</>
-								)}
-								{settings.exportTo === "clipboard" && (
-									<>
-										<IconCapCopy class="size-4" />
-										Export to Clipboard
-									</>
-								)}
-								{settings.exportTo === "link" && (
-									<>
-										<IconCapLink class="size-4" />
-										{meta().sharing
-											? "Reupload to same link"
-											: "Create shareable link"}
-									</>
-								)}
-							</button>
-						)}
+						<button
+							type="button"
+							class={cx(
+								EXPORT_CTA_CLASS,
+								"bg-ed-accent text-white hover:bg-ed-accent-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
+							)}
+							onClick={() => {
+								if (settings.exportTo === "file") save.mutate();
+								else if (settings.exportTo === "link") upload.mutate();
+								else copy.mutate();
+							}}
+						>
+							{settings.exportTo === "file" && (
+								<>
+									<IconCapFile class="size-4" />
+									Export to File
+								</>
+							)}
+							{settings.exportTo === "clipboard" && (
+								<>
+									<IconCapCopy class="size-4" />
+									Export to Clipboard
+								</>
+							)}
+							{settings.exportTo === "link" && (
+								<>
+									<IconCapLink class="size-4" />
+									{meta().sharing
+										? "Reupload to same link"
+										: "Create shareable link"}
+								</>
+							)}
+						</button>
 					</div>
 				</div>
 			</div>

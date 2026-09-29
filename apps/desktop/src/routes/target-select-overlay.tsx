@@ -856,6 +856,7 @@ function Inner() {
 						() => isInteracting() || isActiveDisplay(),
 					);
 					const shouldShowSelectionHint = createMemo(() => {
+						if (options.mode === "screenshot") return false;
 						if (effectiveInitialAreaBounds() !== undefined) return false;
 						if (!isActiveDisplay()) return false;
 						const bounds = crop();
@@ -2158,14 +2159,6 @@ function RecordingControls(props: {
 						commands.setRecordingMode("studio");
 					},
 					checked: rawOptions.mode === "studio",
-				}),
-				await CheckMenuItem.new({
-					text: "Instant Mode",
-					action: () => {
-						setOptions("mode", "instant");
-						commands.setRecordingMode("instant");
-					},
-					checked: rawOptions.mode === "instant",
 				}),
 				await CheckMenuItem.new({
 					text: "Screenshot Mode",

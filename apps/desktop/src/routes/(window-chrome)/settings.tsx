@@ -19,11 +19,8 @@ import {
 } from "solid-js";
 import toast from "solid-toast";
 import { CapErrorBoundary } from "~/components/CapErrorBoundary";
-import { SignInButton } from "~/components/SignInButton";
-
 import { authStore, userProfileStore } from "~/store";
 import { resetUser, trackEvent } from "~/utils/analytics";
-import { createSignInMutation } from "~/utils/auth";
 import { commands } from "~/utils/tauri";
 import {
 	apiClient,
@@ -136,7 +133,6 @@ function SettingsContentSkeleton() {
 export default function Settings(props: RouteSectionProps) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const signIn = createSignInMutation();
 	const [auth, setAuth] =
 		createSignal<Awaited<ReturnType<typeof authStore.get>>>();
 	const [authLoaded, setAuthLoaded] = createSignal(false);
@@ -263,7 +259,6 @@ export default function Settings(props: RouteSectionProps) {
 		},
 	];
 	const accountName = createMemo(() => {
-		if (!auth()) return "Click to sign in";
 		if (!userProfile.isSuccess) return "Signed in";
 
 		const name = userProfile.data?.name?.trim();
@@ -289,18 +284,7 @@ export default function Settings(props: RouteSectionProps) {
 		);
 	};
 	const handleProfileClick = () => {
-		if (auth()) {
-			openDashboard();
-			return;
-		}
-
-		if (signIn.isPending) {
-			signIn.variables.abort();
-			signIn.reset();
-			return;
-		}
-
-		signIn.mutate(new AbortController());
+		if (auth()) openDashboard();
 	};
 	const handleProfileImageError = (imageUrl: string) => {
 		setFailedProfileImageUrl(imageUrl);
@@ -468,43 +452,45 @@ export default function Settings(props: RouteSectionProps) {
 				data-tauri-drag-region
 			>
 				<div class="cap-settings-window-spacer" data-tauri-drag-region />
-				<button
-					type="button"
-					class="cap-settings-profile flex h-11 gap-2 items-center mx-2 mt-2 mb-3 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-gray-3"
-					data-tauri-drag-region="false"
-					onClick={handleProfileClick}
-				>
-					<Show
-						when={accountImageUrl()}
-						fallback={
-							<div class="cap-settings-profile-icon flex justify-center items-center size-8 shrink-0 rounded-full bg-gray-3 text-gray-11">
-								<IconLucideUserRound class="size-4" aria-hidden="true" />
-							</div>
-						}
+				<Show when={auth()}>
+					<button
+						type="button"
+						class="cap-settings-profile flex h-11 gap-2 items-center mx-2 mt-2 mb-3 px-2 py-1.5 rounded-lg text-left transition-colors hover:bg-gray-3"
+						data-tauri-drag-region="false"
+						onClick={handleProfileClick}
 					>
-						{(imageUrl) => (
-							<img
-								class="cap-settings-profile-image size-8 shrink-0 rounded-full object-cover bg-gray-3"
-								src={imageUrl()}
-								alt=""
-								draggable={false}
-								onError={() => {
-									const remoteUrl = accountRemoteImageUrl();
-									if (remoteUrl) handleProfileImageError(remoteUrl);
-									setProfileImageObjectUrl(null);
-								}}
-							/>
-						)}
-					</Show>
-					<div class="cap-settings-profile-copy flex h-8 flex-col flex-1 justify-center gap-0.5 min-w-0">
-						<p class="h-[15px] truncate text-[13px] leading-[15px] text-gray-12">
-							{accountName()}
-						</p>
-						<p class="h-[13px] truncate text-[11px] leading-[13px] text-gray-10">
-							Account
-						</p>
-					</div>
-				</button>
+						<Show
+							when={accountImageUrl()}
+							fallback={
+								<div class="cap-settings-profile-icon flex justify-center items-center size-8 shrink-0 rounded-full bg-gray-3 text-gray-11">
+									<IconLucideUserRound class="size-4" aria-hidden="true" />
+								</div>
+							}
+						>
+							{(imageUrl) => (
+								<img
+									class="cap-settings-profile-image size-8 shrink-0 rounded-full object-cover bg-gray-3"
+									src={imageUrl()}
+									alt=""
+									draggable={false}
+									onError={() => {
+										const remoteUrl = accountRemoteImageUrl();
+										if (remoteUrl) handleProfileImageError(remoteUrl);
+										setProfileImageObjectUrl(null);
+									}}
+								/>
+							)}
+						</Show>
+						<div class="cap-settings-profile-copy flex h-8 flex-col flex-1 justify-center gap-0.5 min-w-0">
+							<p class="h-[15px] truncate text-[13px] leading-[15px] text-gray-12">
+								{accountName()}
+							</p>
+							<p class="h-[13px] truncate text-[11px] leading-[13px] text-gray-10">
+								Account
+							</p>
+						</div>
+					</button>
+				</Show>
 				<ul class="cap-settings-nav min-w-48 h-full p-2.5 space-y-1 text-gray-12">
 					<For each={settingsItems}>
 						{(item) => (
@@ -558,19 +544,10 @@ export default function Settings(props: RouteSectionProps) {
 							</div>
 						)}
 					</Show>
-					<Show
-						when={authLoaded()}
-						fallback={
-							<div class="h-9 w-full rounded-lg bg-gray-4 animate-pulse" />
-						}
-					>
-						{auth() ? (
-							<Button onClick={handleAuth} variant="gray" class="w-full">
-								Sign Out
-							</Button>
-						) : (
-							<SignInButton>Sign In</SignInButton>
-						)}
+					<Show when={authLoaded() && auth()}>
+						<Button onClick={handleAuth} variant="gray" class="w-full">
+							Sign Out
+						</Button>
 					</Show>
 				</div>
 			</div>

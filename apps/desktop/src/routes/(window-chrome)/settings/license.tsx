@@ -85,12 +85,6 @@ export default function Page() {
 											</p>
 										</Show>
 									</Show>
-									<Show when={!auth.data}>
-										<p class="mt-3 text-xs leading-relaxed text-gray-10">
-											Already have Cap Pro? Sign in with your account from the
-											sidebar.
-										</p>
-									</Show>
 								</SectionCard>
 							</Section>
 							<Section
