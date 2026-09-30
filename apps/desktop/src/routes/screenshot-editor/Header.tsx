@@ -12,7 +12,6 @@ import IconCapCrop from "~icons/cap/crop";
 import IconCapTrash from "~icons/cap/trash";
 import IconLucideCopy from "~icons/lucide/copy";
 import IconLucideFolder from "~icons/lucide/folder";
-import IconLucideLink from "~icons/lucide/link";
 import IconLucideMoreHorizontal from "~icons/lucide/more-horizontal";
 import IconLucidePin from "~icons/lucide/pin";
 import IconLucideSave from "~icons/lucide/save";
@@ -45,8 +44,7 @@ export function Header() {
 	} = ctx;
 	const path = () => ctx.editorInstance()?.path ?? "";
 
-	const { exportImage, pinImage, exportStatus, isExporting } =
-		useScreenshotExport();
+	const { exportImage, pinImage, isExporting } = useScreenshotExport();
 
 	createEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -95,18 +93,6 @@ export function Header() {
 	};
 
 	const isCropDisabled = () => !originalImageSize() || !isImageFileReady();
-	const shareTooltip = () => {
-		switch (exportStatus()) {
-			case "rendering":
-				return "Rendering screenshot";
-			case "encoding":
-				return "Preparing upload";
-			case "uploading":
-				return "Uploading screenshot";
-			default:
-				return "Create shareable link";
-		}
-	};
 
 	return (
 		<div
@@ -165,13 +151,6 @@ export function Header() {
 					onClick={() => exportImage("file")}
 					disabled={isExporting()}
 					leftIcon={<IconLucideSave class="size-4" />}
-				/>
-
-				<EditorButton
-					tooltipText={shareTooltip()}
-					onClick={() => exportImage("share")}
-					disabled={isExporting()}
-					leftIcon={<IconLucideLink class="size-4" />}
 				/>
 
 				<DropdownMenu gutter={8} placement="bottom-end">

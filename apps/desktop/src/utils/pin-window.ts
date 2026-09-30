@@ -2,20 +2,28 @@ import { appDataDir, join } from "@tauri-apps/api/path";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { mkdir, readDir, remove, writeFile } from "@tauri-apps/plugin-fs";
 import { type as ostype } from "@tauri-apps/plugin-os";
-import { fitPinSize, type PinSize, pinFileTimestamp } from "./pinned-image";
+import {
+	clampPinScale,
+	naturalPinSize,
+	type PinSize,
+	pinFitScale,
+	scaledPinSize,
+	shouldRemoveStalePin,
+} from "./pinned-image";
 
 const PIN_DIRECTORY = "pins";
-const STALE_PIN_AGE_MS = 24 * 60 * 60 * 1000;
 
 let pinCounter = 0;
 
 async function removeStalePins(directory: string) {
-	const cutoff = Date.now() - STALE_PIN_AGE_MS;
+	const windows = await WebviewWindow.getAll().catch(() => null);
+	if (!windows) return;
+	const openLabels = new Set(windows.map((entry) => entry.label));
 	const entries = await readDir(directory).catch(() => []);
+	const now = Date.now();
 	await Promise.all(
 		entries.map(async (entry) => {
-			const createdAt = pinFileTimestamp(entry.name);
-			if (createdAt === null || createdAt >= cutoff) return;
+			if (!shouldRemoveStalePin(entry.name, now, openLabels)) return;
 			await remove(await join(directory, entry.name)).catch(() => undefined);
 		}),
 	);
@@ -64,14 +72,18 @@ export async function openPinnedImage(blob: Blob, pixels: PinSize) {
 	const path = await join(directory, `${id}.png`);
 	await writeFile(path, new Uint8Array(await blob.arrayBuffer()));
 
-	const size = fitPinSize(pixels, window.devicePixelRatio, {
+	const screen = {
 		width: window.screen.availWidth,
 		height: window.screen.availHeight,
-	});
+	};
+	const natural = naturalPinSize(pixels, window.devicePixelRatio);
+	const scale = clampPinScale(pinFitScale(natural, screen), natural, screen);
+	const size = scaledPinSize(natural, scale);
 	const params = new URLSearchParams({
 		src: path,
-		w: String(size.width),
-		h: String(size.height),
+		w: String(natural.width),
+		h: String(natural.height),
+		s: String(scale),
 	});
 
 	try {
