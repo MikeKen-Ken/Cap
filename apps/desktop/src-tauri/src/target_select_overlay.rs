@@ -180,14 +180,6 @@ pub(crate) async fn open_target_select_overlays_for_session(
         }
     }
 
-    if let Some(mode) = target_mode {
-        let _ = crate::RequestSetTargetMode {
-            target_mode: Some(mode),
-            display_id: None,
-        }
-        .emit(&app);
-    }
-
     for display_id in &display_ids {
         if !state.picker_is_current(picker_session) {
             return Ok(picker_session);
