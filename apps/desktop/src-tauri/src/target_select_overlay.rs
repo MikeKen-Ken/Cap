@@ -515,10 +515,11 @@ pub fn present_screenshot_freeze(window: WebviewWindow, instance: u32) {
     else {
         return;
     };
+    let cursor_display = Display::get_containing_cursor().map(|display| display.id());
     let focus = matches!(
         CapWindowId::from_str(window.label()),
         Ok(CapWindowId::TargetSelectOverlay { display_id })
-            if Display::get_containing_cursor().map(|display| display.id()) == Some(display_id)
+            if cursor_display.as_ref() == Some(&display_id)
     );
     request_overlay_reveal(&window, session, focus);
 }

@@ -47,10 +47,11 @@ impl Default for FreezeStore {
 }
 
 pub fn begin(app: &AppHandle) -> u64 {
-    let mut inner = lock(app);
-    inner.generation = inner.generation.wrapping_add(1);
-    inner.frames.clear();
-    inner.generation
+    with_inner(app, |inner| {
+        inner.generation = inner.generation.wrapping_add(1);
+        inner.frames.clear();
+        inner.generation
+    })
 }
 
 pub fn clear(app: &AppHandle) {
@@ -92,13 +93,12 @@ pub async fn capture_displays(
 #[specta::specta]
 pub fn screenshot_freeze_preview(window: WebviewWindow, display_id: String) -> Option<String> {
     let app = window.app_handle();
-    let preview = {
-        let inner = lock(&app);
+    let preview = with_inner(&app, |inner| {
         inner
             .frames
             .get(&display_id)
             .map(|frame| frame.preview.clone())
-    }?;
+    })?;
     let _ = window
         .state::<tauri::scope::Scopes>()
         .allow_file(preview.as_path());
@@ -129,7 +129,9 @@ fn area_display_id(target: &ScreenCaptureTarget) -> Option<String> {
 }
 
 fn take_frame(app: &AppHandle, display_id: &str) -> Option<image::DynamicImage> {
-    lock(app).frames.remove(display_id).map(|frame| frame.image)
+    with_inner(app, |inner| {
+        inner.frames.remove(display_id).map(|frame| frame.image)
+    })
 }
 
 async fn publish(
@@ -155,12 +157,9 @@ async fn publish(
             .allow_file(preview.as_path());
     }
 
-    {
-        let mut inner = lock(app);
+    if let Some(preview) = with_inner(app, |inner| {
         if inner.generation != generation {
-            drop(inner);
-            let _ = std::fs::remove_file(&preview);
-            return Err("Screenshot freeze was replaced".into());
+            return Some(preview);
         }
         inner.frames.insert(
             key.clone(),
@@ -169,6 +168,10 @@ async fn publish(
                 preview,
             },
         );
+        None
+    }) {
+        let _ = std::fs::remove_file(&preview);
+        return Err("Screenshot freeze was replaced".into());
     }
     let _ = ScreenshotFreezeReady { display_id: key }.emit(app);
     Ok(())
@@ -228,12 +231,11 @@ fn overlay_window(app: &AppHandle, display_id: &DisplayId) -> Option<WebviewWind
 
 fn still_current(app: &AppHandle, session: u32, generation: u64) -> bool {
     app.state::<WindowFocusManager>().picker_is_current(session)
-        && lock(app).generation == generation
+        && with_inner(app, |inner| inner.generation) == generation
 }
 
-fn lock(app: &AppHandle) -> std::sync::MutexGuard<'_, Inner> {
-    app.state::<FreezeStore>()
-        .inner
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+fn with_inner<T>(app: &AppHandle, f: impl FnOnce(&mut Inner) -> T) -> T {
+    let store = app.state::<FreezeStore>();
+    let mut inner = store.inner.lock().unwrap_or_else(PoisonError::into_inner);
+    f(&mut inner)
 }
