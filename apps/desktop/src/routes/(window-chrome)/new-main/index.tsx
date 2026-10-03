@@ -2003,9 +2003,7 @@ function Page() {
 			// window is always-on-top — revealing it then covers the editor.
 			const dismissal = rawOptions.targetModeDismissal ?? "cancelled";
 			const dismissalReveals =
-				dismissal === "cancelled" ||
-				dismissal === "screenshot" ||
-				dismissal === "recordingInstant";
+				dismissal === "cancelled" || dismissal === "recordingInstant";
 			if (dismissalReveals) {
 				void revealRecordingWindow();
 			}
