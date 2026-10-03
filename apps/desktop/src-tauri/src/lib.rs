@@ -7675,9 +7675,13 @@ pub async fn run(recording_logging_handle: LoggingHandle, logs_dir: PathBuf) {
                                     }
                                 });
                             }
-                            CapWindowId::Editor { .. } | CapWindowId::ScreenshotEditor { .. } => {
+                            CapWindowId::Editor { .. } => {
                                 editor_recording::abort_if_editor_gone(app);
-                                restore_main_windows_if_no_editors(app);
+                                restore_main_windows_if_no_editors(app, true);
+                            }
+                            CapWindowId::ScreenshotEditor { .. } => {
+                                editor_recording::abort_if_editor_gone(app);
+                                restore_main_windows_if_no_editors(app, false);
                             }
                             CapWindowId::Settings => {
                                 restore_main_and_target_select_windows(app);
@@ -8460,7 +8464,7 @@ fn has_open_editor_window(app: &AppHandle) -> bool {
         .any(|label| matches!(CapWindowId::from_str(label), Ok(CapWindowId::Editor { .. })))
 }
 
-fn restore_main_windows_if_no_editors(app: &AppHandle) {
+fn restore_main_windows_if_no_editors(app: &AppHandle, reveal_main: bool) {
     let has_other_editors = app.webview_windows().keys().any(|label| {
         matches!(
             CapWindowId::from_str(label),
@@ -8469,7 +8473,7 @@ fn restore_main_windows_if_no_editors(app: &AppHandle) {
     });
 
     if !has_other_editors {
-        if CapWindowId::Settings.get(app).is_none() {
+        if reveal_main && CapWindowId::Settings.get(app).is_none() {
             if let Some(main) = CapWindowId::Main.get(app) {
                 let generation = clean_capture::generation(app);
                 let _ = clean_capture::reveal_now(&main, generation);
