@@ -10,14 +10,15 @@ use cap_recording::screen_capture::ScreenCaptureTarget;
 
 use crate::exit_shutdown::{abort_join_handles, read_target_under_cursor};
 use crate::{
-    App, ArcLock, general_settings,
+    general_settings,
     recording_settings::RecordingTargetMode,
     window_exclusion::WindowExclusion,
-    windows::{CapWindowId, ShowCapWindow, hide_overlay},
+    windows::{hide_overlay, CapWindowId, ShowCapWindow},
+    App, ArcLock,
 };
 use scap_targets::{
-    Display, DisplayId, Window, WindowId,
     bounds::{LogicalBounds, LogicalSize, PhysicalSize},
+    Display, DisplayId, Window, WindowId,
 };
 use serde::Serialize;
 use specta::Type;
@@ -99,17 +100,17 @@ pub(crate) async fn open_target_select_overlays_for_session(
             .unwrap_or_else(|_| Display::primary().id())
     });
 
-    let display_ids = if let Some(display_id) = resolved_specific_display_id.clone() {
+    // Area selection has to exist on every display. A focused target or a
+    // specific display only chooses which overlay starts focused; limiting the
+    // windows to that display leaves the rectangle stuck on one screen.
+    let display_ids = if matches!(target_mode, Some(RecordingTargetMode::Area)) {
+        all_display_ids()
+    } else if let Some(display_id) = resolved_specific_display_id.clone() {
         vec![display_id]
     } else if let Some(display) = focused_target.as_ref().and_then(|t| t.display()) {
         vec![display.id()]
     } else {
-        let displays = Display::list();
-        if displays.is_empty() {
-            vec![Display::primary().id()]
-        } else {
-            displays.into_iter().map(|display| display.id()).collect()
-        }
+        all_display_ids()
     };
 
     let focus_display_id = resolved_specific_display_id
@@ -248,6 +249,7 @@ pub(crate) async fn open_target_select_overlays_for_session(
             settings.excluded_windows
         });
 
+    let track_cursor_display = matches!(target_mode, Some(RecordingTargetMode::Area));
     let handle = tokio::spawn({
         let app = app.clone();
 
@@ -260,6 +262,9 @@ pub(crate) async fn open_target_select_overlays_for_session(
                             .picker_is_current(picker_session)
                 },
                 || {
+                    if track_cursor_display {
+                        return scap_targets::Display::get_containing_cursor();
+                    }
                     focused_target
                         .as_ref()
                         .map(|v| v.display())
@@ -308,6 +313,15 @@ pub(crate) async fn open_target_select_overlays_for_session(
     drop(lifecycle);
 
     Ok(picker_session)
+}
+
+fn all_display_ids() -> Vec<DisplayId> {
+    let displays = Display::list();
+    if displays.is_empty() {
+        vec![Display::primary().id()]
+    } else {
+        displays.into_iter().map(|display| display.id()).collect()
+    }
 }
 
 fn describe_selectable_window(
@@ -736,8 +750,8 @@ pub async fn focus_window(window_id: WindowId) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         use windows::Win32::UI::WindowsAndMessaging::{
-            GetWindowPlacement, IsIconic, SW_RESTORE, SetForegroundWindow, SetWindowPlacement,
-            ShowWindow, WINDOWPLACEMENT,
+            GetWindowPlacement, IsIconic, SetForegroundWindow, SetWindowPlacement, ShowWindow,
+            SW_RESTORE, WINDOWPLACEMENT,
         };
 
         let hwnd = window.raw_handle().inner();
@@ -1037,7 +1051,7 @@ impl WindowFocusManager {
 
 #[cfg(test)]
 mod linux_picker_tests {
-    use super::{LinuxPickerCandidate, WindowExclusion, first_linux_picker_target};
+    use super::{first_linux_picker_target, LinuxPickerCandidate, WindowExclusion};
 
     fn candidate(
         title: &'static str,

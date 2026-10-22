@@ -63,6 +63,7 @@ import {
 	generalSettingsStore,
 	recordingStartSafetyStore,
 } from "~/store";
+import { createAreaDisplayHandoff } from "~/utils/area-display-handoff";
 import {
 	AREA_SELECTION_STORAGE_KEY,
 	AREA_SELECTION_STORAGE_SYNC,
@@ -825,55 +826,115 @@ function Inner() {
 									minSize(),
 								);
 							});
-							const linux = ostype() === "linux";
 							const [localPointerInside, setLocalPointerInside] = createSignal<
 								boolean | undefined
 							>();
-							if (linux) {
-								const updateLocalPointer = (event: PointerEvent) => {
-									setLocalPointerInside(
-										event.clientX >= 0 &&
-											event.clientY >= 0 &&
-											event.clientX < window.innerWidth &&
-											event.clientY < window.innerHeight,
-									);
-								};
-								createEventListener(
-									window,
-									"pointerover",
-									updateLocalPointer,
-									true,
+							const updateLocalPointer = (event: PointerEvent) => {
+								setLocalPointerInside(
+									event.clientX >= 0 &&
+										event.clientY >= 0 &&
+										event.clientX < window.innerWidth &&
+										event.clientY < window.innerHeight,
 								);
-								createEventListener(
-									window,
-									"pointermove",
-									updateLocalPointer,
-									true,
-								);
-								createEventListener(
-									window,
-									"pointerout",
-									(event) => {
-										if (event.relatedTarget === null)
-											setLocalPointerInside(false);
-									},
-									true,
-								);
-								createEventListener(window, "blur", () =>
-									setLocalPointerInside(false),
-								);
-							}
+							};
+							createEventListener(
+								window,
+								"pointerover",
+								updateLocalPointer,
+								true,
+							);
+							createEventListener(
+								window,
+								"pointermove",
+								updateLocalPointer,
+								true,
+							);
+							createEventListener(
+								window,
+								"pointerout",
+								(event) => {
+									if (event.relatedTarget === null)
+										setLocalPointerInside(false);
+								},
+								true,
+							);
+							createEventListener(window, "blur", () =>
+								setLocalPointerInside(false),
+							);
 							const isActiveDisplay = createMemo(() => {
+								const local = localPointerInside();
+								if (local !== undefined) return local;
 								const activeDisplayId = targetUnderCursor.display_id;
 								if (activeDisplayId != null) {
 									return activeDisplayId === displayId();
 								}
-								return linux
-									? (localPointerInside() ?? params.isHoveredDisplay === "true")
-									: params.isHoveredDisplay === "true";
+								return params.isHoveredDisplay === "true";
+							});
+							async function saveAreaScreenshot(cropBounds: CropBounds) {
+								const target: ScreenCaptureTarget = {
+									variant: "area",
+									screen: displayId(),
+									bounds: {
+										position: {
+											x: cropBounds.x,
+											y: cropBounds.y,
+										},
+										size: {
+											width: cropBounds.width,
+											height: cropBounds.height,
+										},
+									},
+								};
+								try {
+									const path = await commands.saveFrozenAreaScreenshot(target);
+									const shouldOpenEditor =
+										await commands.automationShouldOpenScreenshotEditor(target);
+									if (shouldOpenEditor) {
+										await commands.showWindow({
+											ScreenshotEditor: { path },
+										});
+									}
+									await commands.closeTargetSelectOverlays();
+								} catch (e) {
+									const message = e instanceof Error ? e.message : String(e);
+									toast.error(`Failed to take screenshot: ${message}`);
+									console.error("Failed to take screenshot", e);
+								}
+							}
+
+							const handoff = createAreaDisplayHandoff({
+								screenId: () => displayId(),
+								crop,
+								interacting: isInteracting,
+								applyCrop: (bounds) => {
+									cropperRef?.setCrop(bounds);
+									setCrop(bounds);
+								},
+								clearCrop: () => {
+									cropperRef?.setCrop(CROP_ZERO);
+									setCrop(CROP_ZERO);
+								},
+								onAccept: (bounds) => {
+									if (
+										options.mode !== "screenshot" &&
+										areaSelectionPreferences.locked
+									) {
+										setAreaSelectionPreferences({
+											locked: true,
+											screenId: displayId(),
+											bounds: { ...bounds },
+										});
+									}
+									if (options.mode === "screenshot") {
+										void saveAreaScreenshot(bounds);
+									}
+								},
+								claimActive: () => setLocalPointerInside(true),
+								releaseActive: () => setLocalPointerInside(false),
 							});
 							const shouldShowOverlay = createMemo(
-								() => isInteracting() || isActiveDisplay(),
+								() =>
+									isInteracting() || isActiveDisplay() || handoff.receiving(),
 							);
 							const shouldShowSelectionHint = createMemo(() => {
 								if (options.mode === "screenshot") return false;
@@ -1291,60 +1352,10 @@ function Inner() {
 								setWasInteracting(interacting);
 
 								if (was && !interacting) {
+									if (handoff.cursorOutside()) return;
 									persistLockedSelection();
 									if (options.mode === "screenshot" && isValid()) {
-										const cropBounds = crop();
-										const displayInfo = areaDisplayInfo.data;
-										console.log("[Screenshot Debug] crop bounds:", cropBounds);
-										console.log(
-											"[Screenshot Debug] display info:",
-											displayInfo,
-										);
-										console.log(
-											"[Screenshot Debug] window.innerWidth/Height:",
-											window.innerWidth,
-											window.innerHeight,
-										);
-
-										const target: ScreenCaptureTarget = {
-											variant: "area",
-											screen: displayId(),
-											bounds: {
-												position: {
-													x: cropBounds.x,
-													y: cropBounds.y,
-												},
-												size: {
-													width: cropBounds.width,
-													height: cropBounds.height,
-												},
-											},
-										};
-
-										console.log(
-											"[Screenshot Debug] target being sent:",
-											JSON.stringify(target, null, 2),
-										);
-
-										try {
-											const path =
-												await commands.saveFrozenAreaScreenshot(target);
-											const shouldOpenEditor =
-												await commands.automationShouldOpenScreenshotEditor(
-													target,
-												);
-											if (shouldOpenEditor) {
-												await commands.showWindow({
-													ScreenshotEditor: { path },
-												});
-											}
-											await commands.closeTargetSelectOverlays();
-										} catch (e) {
-											const message =
-												e instanceof Error ? e.message : String(e);
-											toast.error(`Failed to take screenshot: ${message}`);
-											console.error("Failed to take screenshot", e);
-										}
+										await saveAreaScreenshot(crop());
 									}
 								}
 							});
@@ -1353,7 +1364,8 @@ function Inner() {
 								<div
 									class="fixed w-screen h-screen"
 									classList={{
-										"opacity-0 pointer-events-none": !shouldShowOverlay(),
+										"pointer-events-none": !shouldShowOverlay(),
+										"opacity-0": !shouldShowOverlay() || handoff.handedOff(),
 									}}
 								>
 									<Show when={isActiveDisplay()}>
