@@ -6,12 +6,38 @@ use tauri::{AppHandle, Manager};
 use super::WindowFocusManager;
 use crate::windows::{CapWindowId, ShowCapWindow};
 
+const SCREENSHOT_EDITOR_PREWARM_DELAY: Duration = Duration::from_millis(1500);
+
 pub fn schedule(app: AppHandle) {
+    schedule_after(app, Duration::ZERO);
+}
+
+pub fn schedule_after(app: AppHandle, delay: Duration) {
     tokio::spawn(async move {
+        if !delay.is_zero() {
+            tokio::time::sleep(delay).await;
+        }
         if let Err(error) = warm(app).await {
             tracing::debug!(%error, "Target picker prewarm skipped");
         }
     });
+}
+
+pub fn delay_while_screenshot_editor_loads(app: &AppHandle) -> Duration {
+    if screenshot_editor_exists(app) {
+        SCREENSHOT_EDITOR_PREWARM_DELAY
+    } else {
+        Duration::ZERO
+    }
+}
+
+fn screenshot_editor_exists(app: &AppHandle) -> bool {
+    app.webview_windows().keys().any(|label| {
+        matches!(
+            CapWindowId::from_str(label),
+            Ok(CapWindowId::ScreenshotEditor { .. })
+        ) && !crate::screenshot_editor::spare::is_pending_window(app, label)
+    })
 }
 
 async fn warm(app: AppHandle) -> Result<(), String> {

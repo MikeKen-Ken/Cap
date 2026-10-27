@@ -90,9 +90,9 @@ impl HotkeysStore {
             hotkeys: HashMap::from([(
                 HotkeyAction::ScreenshotArea,
                 Hotkey {
-                    code: Code::KeyS,
+                    code: Code::KeyH,
                     meta: false,
-                    ctrl: false,
+                    ctrl: true,
                     alt: false,
                     shift: true,
                 },
