@@ -208,6 +208,17 @@ where
     }
 }
 
+fn reveal_screenshot_editor(window: &WebviewWindow) {
+    let _ = window.unminimize();
+    let _ = window.set_skip_taskbar(false);
+    let _ = window.show();
+    let _ = window.set_focus();
+    if window.is_visible().ok() == Some(false) {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 fn hide_recording_windows(app: &AppHandle, restore_target_select_overlays: bool) {
     let focus_manager = app.try_state::<WindowFocusManager>();
     if let Some(focus_manager) = focus_manager.as_ref() {
@@ -2368,12 +2379,7 @@ impl ShowCapWindow {
                     .as_ref()
                     .and_then(|opening| opening.claimed_spare_window())
                 {
-                    Some(window) => {
-                        if let CapWindowId::ScreenshotEditor { id } = &_id {
-                            crate::screenshot_editor::spare::release(app, *id);
-                        }
-                        window
-                    }
+                    Some(window) => window,
                     None => {
                         let window = Self::window_builder_with_id(
                             app,
@@ -2393,9 +2399,10 @@ impl ShowCapWindow {
                 };
 
                 fit_content_window_bounds(&window, &_id, true).await;
-
-                window.show().ok();
-                window.set_focus().ok();
+                reveal_screenshot_editor(&window);
+                if let CapWindowId::ScreenshotEditor { id } = &_id {
+                    crate::screenshot_editor::spare::release(app, *id);
+                }
                 crate::screenshot_editor::spare::schedule_refill(app.clone());
 
                 window

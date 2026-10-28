@@ -899,7 +899,7 @@ pub async fn create_screenshot_editor_instance(
         return Err("Invalid window".to_string());
     };
 
-    spare::wait_until_released(window.app_handle(), id).await;
+    spare::wait_for_assignment(window.app_handle(), id).await?;
 
     let path = {
         let window_ids = ScreenshotEditorWindowIds::get(window.app_handle());

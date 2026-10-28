@@ -24,6 +24,7 @@ import {
 	type XY,
 } from "~/utils/tauri";
 import { calculateImageTransform } from "./layout";
+import { loadScreenshotEditorInstance } from "./load-instance";
 
 const NV12_FORMAT_MAGIC = 0x4e563132;
 
@@ -221,7 +222,9 @@ function createScreenshotEditorContext() {
 	const [editorInstance] = createResource(async () => {
 		const perfStart = performance.now();
 		const sincePerfStart = () => Math.round(performance.now() - perfStart);
-		const instance = await commands.createScreenshotEditorInstance();
+		const instance = await loadScreenshotEditorInstance(() =>
+			commands.createScreenshotEditorInstance(),
+		);
 		console.info(
 			`[screenshot-editor] createScreenshotEditorInstance resolved in ${sincePerfStart()}ms`,
 		);

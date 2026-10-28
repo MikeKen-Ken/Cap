@@ -53,6 +53,19 @@ export const QUICK_AREA_RATIOS: readonly Ratio[] = [
 	[1, 1],
 ];
 
+/** A fresh draw below this on either side is a click, not a region. */
+export const SELECTION_CLICK_EXTENT = 5;
+
+export function selectionIsClick(bounds: {
+	width: number;
+	height: number;
+}): boolean {
+	return (
+		bounds.width < SELECTION_CLICK_EXTENT ||
+		bounds.height < SELECTION_CLICK_EXTENT
+	);
+}
+
 export type AreaSelectionPreferences = {
 	locked: boolean;
 	screenId: DisplayId | null;

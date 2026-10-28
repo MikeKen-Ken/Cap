@@ -6,6 +6,7 @@ import {
 	cropBoundsEqual,
 	getLockedAreaBounds,
 	ratiosEqual,
+	selectionIsClick,
 } from "./area-selection";
 
 const minimumSize = { width: 150, height: 150 };
@@ -120,5 +121,15 @@ describe("area selection storage sync", () => {
 		expect(
 			areaSelectionSyncData({ key: null, newValue: null, timeStamp: 42 }),
 		).toBeNull();
+	});
+});
+
+describe("selectionIsClick", () => {
+	it("treats a click or a tiny drag as too small to be a region", () => {
+		expect(selectionIsClick({ width: 0, height: 0 })).toBe(true);
+		expect(selectionIsClick({ width: 4, height: 80 })).toBe(true);
+		expect(selectionIsClick({ width: 80, height: 4 })).toBe(true);
+		expect(selectionIsClick({ width: 5, height: 5 })).toBe(false);
+		expect(selectionIsClick({ width: 120, height: 80 })).toBe(false);
 	});
 });

@@ -111,7 +111,7 @@ pub async fn save_frozen_area_screenshot(
     app: AppHandle,
     target: ScreenCaptureTarget,
 ) -> Result<PathBuf, String> {
-    let Some(display_id) = area_display_id(&target) else {
+    let Some(display_id) = frozen_display_id(&target) else {
         return crate::recording::take_screenshot(app, target).await;
     };
     let Some(image) = take_frame(&app, &display_id) else {
@@ -121,9 +121,10 @@ pub async fn save_frozen_area_screenshot(
     crate::recording::persist_captured_screenshot(app, cropped, target).await
 }
 
-fn area_display_id(target: &ScreenCaptureTarget) -> Option<String> {
+fn frozen_display_id(target: &ScreenCaptureTarget) -> Option<String> {
     match target {
         ScreenCaptureTarget::Area { screen, .. } => Some(screen.to_string()),
+        ScreenCaptureTarget::Display { id } => Some(id.to_string()),
         _ => None,
     }
 }

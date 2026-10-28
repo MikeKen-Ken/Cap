@@ -77,6 +77,7 @@ import {
 import { getCameraWindow } from "~/utils/camera-window";
 import { createDevicesQuery } from "~/utils/devices";
 import { shouldConfirmRecordingWithoutMicrophone } from "~/utils/general-settings";
+import { openFrozenAreaScreenshot } from "~/utils/open-area-screenshot";
 import {
 	createCameraMutation,
 	createMicrophoneMutation,
@@ -870,8 +871,21 @@ function Inner() {
 								}
 								return params.isHoveredDisplay === "true";
 							});
-							async function saveAreaScreenshot(cropBounds: CropBounds) {
-								const target: ScreenCaptureTarget = {
+							const [captureFullScreen, setCaptureFullScreen] =
+								createSignal(false);
+
+							async function saveScreenshot(target: ScreenCaptureTarget) {
+								try {
+									await openFrozenAreaScreenshot(target, commands);
+								} catch (e) {
+									const message = e instanceof Error ? e.message : String(e);
+									toast.error(`Failed to take screenshot: ${message}`);
+									console.error("Failed to take screenshot", e);
+								}
+							}
+
+							function saveAreaScreenshot(cropBounds: CropBounds) {
+								return saveScreenshot({
 									variant: "area",
 									screen: displayId(),
 									bounds: {
@@ -884,22 +898,14 @@ function Inner() {
 											height: cropBounds.height,
 										},
 									},
-								};
-								try {
-									const path = await commands.saveFrozenAreaScreenshot(target);
-									const shouldOpenEditor =
-										await commands.automationShouldOpenScreenshotEditor(target);
-									if (shouldOpenEditor) {
-										await commands.showWindow({
-											ScreenshotEditor: { path },
-										});
-									}
-									await commands.closeTargetSelectOverlays();
-								} catch (e) {
-									const message = e instanceof Error ? e.message : String(e);
-									toast.error(`Failed to take screenshot: ${message}`);
-									console.error("Failed to take screenshot", e);
-								}
+								});
+							}
+
+							function saveFullScreenScreenshot() {
+								return saveScreenshot({
+									variant: "display",
+									id: displayId(),
+								});
 							}
 
 							const handoff = createAreaDisplayHandoff({
@@ -1352,7 +1358,17 @@ function Inner() {
 								setWasInteracting(interacting);
 
 								if (was && !interacting) {
-									if (handoff.cursorOutside()) return;
+									if (handoff.cursorOutside()) {
+										setCaptureFullScreen(false);
+										return;
+									}
+									if (captureFullScreen()) {
+										setCaptureFullScreen(false);
+										if (options.mode === "screenshot") {
+											await saveFullScreenScreenshot();
+										}
+										return;
+									}
 									persistLockedSelection();
 									if (options.mode === "screenshot" && isValid()) {
 										await saveAreaScreenshot(crop());
@@ -1382,7 +1398,9 @@ function Inner() {
 												<div class="min-w-28 px-2 text-base font-normal leading-none tracking-[-0.01em] tabular-nums">
 													{isValid()
 														? `${Math.round(crop().width)} × ${Math.round(crop().height)}`
-														: "Draw an area"}
+														: options.mode === "screenshot"
+															? "Drag, or click for full screen"
+															: "Draw an area"}
 												</div>
 
 												<div class="h-6 w-px bg-gray-5" />
@@ -1548,6 +1566,10 @@ function Inner() {
 										ref={cropperRef}
 										onInteraction={setIsInteracting}
 										onCropChange={setCrop}
+										onSelectionTooSmall={() => {
+											if (options.mode === "screenshot")
+												setCaptureFullScreen(true);
+										}}
 										initialCrop={() =>
 											effectiveInitialAreaBounds() ?? CROP_ZERO
 										}
@@ -2091,12 +2113,7 @@ function RecordingControls(props: {
 			setDismissingPicker(true);
 			props.onRecordingStart?.();
 			try {
-				const path = await commands.saveFrozenAreaScreenshot(target);
-				const shouldOpenEditor =
-					await commands.automationShouldOpenScreenshotEditor(target);
-				if (shouldOpenEditor) {
-					await commands.showWindow({ ScreenshotEditor: { path } });
-				}
+				await openFrozenAreaScreenshot(target, commands);
 			} catch (e) {
 				const message = e instanceof Error ? e.message : String(e);
 				toast.error(`Failed to take screenshot: ${message}`);

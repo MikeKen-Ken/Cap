@@ -21,8 +21,8 @@ import {
 } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Transition } from "solid-transition-group";
+import { selectionIsClick } from "~/utils/area-selection";
 import { createKeyDownSignal } from "~/utils/events";
-
 import { commands } from "~/utils/tauri";
 import { alignCrop, type CropGuides } from "./crop-alignment";
 import "./cropper.css";
@@ -237,6 +237,7 @@ export function Cropper(
 	props: ParentProps<{
 		onCropChange?: (bounds: CropBounds) => void;
 		onInteraction?: (interacting: boolean) => void;
+		onSelectionTooSmall?: () => void;
 		onContextMenu?: (event: PointerEvent) => void;
 		ref?: CropperRef | ((ref: CropperRef) => void);
 		class?: string;
@@ -977,12 +978,13 @@ export function Cropper(
 			e.pointerId,
 			(e) => handleResizePointerMove(e, context),
 			() => {
-				setMouseState({ drag: null });
 				const bounds = rawBounds();
-				if (bounds.width < 5 || bounds.height < 5) {
+				if (selectionIsClick(bounds)) {
 					setRawBounds(initialBounds);
 					if (!isAnimating()) setDisplayRawBounds(initialBounds);
+					props.onSelectionTooSmall?.();
 				}
+				setMouseState({ drag: null });
 			},
 		);
 	}

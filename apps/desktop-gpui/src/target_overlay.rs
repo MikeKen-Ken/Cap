@@ -59,11 +59,22 @@ const AREA_MIN_SIZE: f32 = 150.;
 /// pixel, not the 150px a recording needs.
 const SCREENSHOT_MIN_SIZE: f32 = 1.;
 
+/// `SELECTION_CLICK_EXTENT` in `area-selection.ts`. A fresh draw below this
+/// on either side is a click: screenshot mode captures the whole display.
+const SCREENSHOT_CLICK_EXTENT: f32 = 5.;
+
 fn area_min_size(mode: Mode) -> f32 {
     match mode {
         Mode::Screenshot => SCREENSHOT_MIN_SIZE,
         _ => AREA_MIN_SIZE,
     }
+}
+
+fn screenshot_click(crop: AreaRect) -> bool {
+    !crop.width.is_finite()
+        || !crop.height.is_finite()
+        || crop.width < SCREENSHOT_CLICK_EXTENT
+        || crop.height < SCREENSHOT_CLICK_EXTENT
 }
 
 fn required_window_title_matches(required: Option<&str>, actual: Option<&str>) -> bool {
@@ -1568,9 +1579,18 @@ impl OverlayWindow {
             return root;
         }
         if crop.is_none() && !interacting {
-            root = root.child(self.render_selection_hint());
+            let hint = if self.select.read(cx).recording_mode == Mode::Screenshot {
+                "Drag an area, or click for the full screen"
+            } else {
+                "Click and drag to select an area"
+            };
+            root = root.child(self.render_selection_hint(hint));
         }
-        root = root.child(self.render_area_toolbar(crop, valid));
+        root = root.child(self.render_area_toolbar(
+            crop,
+            valid,
+            self.select.read(cx).recording_mode == Mode::Screenshot,
+        ));
         if crop.is_some() {
             root.child(self.render_area_controls(crop, valid, cx))
         } else {
@@ -1702,7 +1722,7 @@ impl OverlayWindow {
             .collect()
     }
 
-    fn render_selection_hint(&self) -> impl IntoElement {
+    fn render_selection_hint(&self, message: &'static str) -> impl IntoElement {
         let cursor_path = if cfg!(target_os = "windows") {
             "onboarding/cursor-windows.svg"
         } else {
@@ -1806,7 +1826,7 @@ impl OverlayWindow {
                         div()
                             .text_size(px(16.))
                             .font_weight(FontWeight::MEDIUM)
-                            .child("Click and drag to select an area"),
+                            .child(message),
                     ),
             )
     }
@@ -1815,18 +1835,26 @@ impl OverlayWindow {
     /// liquid-glass surface, `min-w-28 px-2 text-base tabular-nums`. The
     /// aspect-ratio, reset, fill and lock controls that share this bar in the
     /// TSX are deferred (README).
-    fn render_area_toolbar(&self, crop: Option<AreaRect>, valid: bool) -> impl IntoElement {
+    fn render_area_toolbar(
+        &self,
+        crop: Option<AreaRect>,
+        valid: bool,
+        screenshot: bool,
+    ) -> impl IntoElement {
         let label = match crop.filter(|_| valid) {
             Some(crop) => format!("{} × {}", crop.width.round(), crop.height.round()),
+            None if screenshot => "Drag, or click for full screen".to_string(),
             None => "Draw an area".to_string(),
         };
+
+        let bar_width = if screenshot && !valid { 320. } else { 200. };
 
         div()
             .absolute()
             // `top-12` on macOS, centred by hand: gpui has no translate.
             .top(px(48.))
-            .left(px((self.display_size.0 - 200.) / 2.))
-            .w(px(200.))
+            .left(px((self.display_size.0 - bar_width) / 2.))
+            .w(px(bar_width))
             .flex()
             .justify_center()
             .child(
@@ -2385,6 +2413,26 @@ impl OverlayWindow {
             return;
         };
         self.snap_guides.clear();
+        let screenshot_draw = matches!(drag, AreaDrag::Draw { .. })
+            && self.select.read(cx).recording_mode == Mode::Screenshot;
+        if screenshot_draw
+            && let Some(crop) = self.crop
+            && screenshot_click(crop)
+        {
+            // A click, or a drag that never became a region, captures this
+            // whole display instead of a sliver.
+            self.crop = None;
+            let display = self.display_id.clone();
+            self.sync_area_camera(cx);
+            cx.defer(move |cx: &mut App| {
+                crate::screenshot::take_screenshot(
+                    ScreenCaptureTarget::Display { id: display },
+                    cx,
+                );
+            });
+            cx.notify();
+            return;
+        }
         if let Some(crop) = self.crop {
             // A click with no drag is not a selection.
             if crop.width < 2. || crop.height < 2. {
@@ -2398,10 +2446,7 @@ impl OverlayWindow {
         // the screenshot area picker has no confirm step
         // (`target-select-overlay.tsx`'s area mouse-up). Move/resize grabs
         // keep the crop for the Start button, same as recording mode.
-        if matches!(drag, AreaDrag::Draw { .. })
-            && self.select.read(cx).recording_mode == Mode::Screenshot
-            && let Some(target) = self.target(cx)
-        {
+        if screenshot_draw && let Some(target) = self.target(cx) {
             cx.defer(move |cx: &mut App| crate::screenshot::take_screenshot(target, cx));
         }
         cx.notify();
@@ -2557,6 +2602,15 @@ mod tests {
             rect(-50., -50., 2000., 2000.).clamped(display),
             rect(0., 0., 1000., 800.)
         );
+    }
+
+    #[test]
+    fn a_click_or_tiny_draw_is_a_full_screen_screenshot() {
+        assert!(screenshot_click(rect(10., 10., 0., 0.)));
+        assert!(screenshot_click(rect(10., 10., 4.9, 200.)));
+        assert!(screenshot_click(rect(10., 10., 200., 4.9)));
+        assert!(!screenshot_click(rect(10., 10., 5., 5.)));
+        assert!(!screenshot_click(rect(10., 20., 100., 80.)));
     }
 
     /// `MIN_SIZE` is 150x150 for a recording; anything smaller is drawn but
