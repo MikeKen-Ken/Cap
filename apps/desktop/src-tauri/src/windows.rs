@@ -208,17 +208,6 @@ where
     }
 }
 
-fn reveal_screenshot_editor(window: &WebviewWindow) {
-    let _ = window.unminimize();
-    let _ = window.set_skip_taskbar(false);
-    let _ = window.show();
-    let _ = window.set_focus();
-    if window.is_visible().ok() == Some(false) {
-        let _ = window.show();
-        let _ = window.set_focus();
-    }
-}
-
 fn hide_recording_windows(app: &AppHandle, restore_target_select_overlays: bool) {
     let focus_manager = app.try_state::<WindowFocusManager>();
     if let Some(focus_manager) = focus_manager.as_ref() {
@@ -1481,7 +1470,6 @@ impl ShowCapWindow {
                         &state.counter,
                         &state.open_gates,
                         |id| CapWindowId::Editor { id },
-                        false,
                     )
                     .await?,
                 )
@@ -1496,7 +1484,6 @@ impl ShowCapWindow {
                         &state.counter,
                         &state.open_gates,
                         |id| CapWindowId::ScreenshotEditor { id },
-                        true,
                     )
                     .await?,
                 )
@@ -2321,7 +2308,8 @@ impl ShowCapWindow {
 
                 PendingEditorInstances::start_prewarm(app, _id.label(), project_path.clone()).await;
 
-                let builder = Self::window_builder_with_id(app, "/editor", &_id, _id.label())
+                let builder = self
+                    .window_builder_with_id(app, "/editor", &_id, _id.label())
                     .maximizable(true)
                     .focused(true);
                 #[cfg(debug_assertions)]
@@ -2375,35 +2363,20 @@ impl ShowCapWindow {
                 PendingScreenshotEditorInstances::start_prewarm(app, _id.label(), path.clone())
                     .await;
 
-                let window = match project_opening
-                    .as_ref()
-                    .and_then(|opening| opening.claimed_spare_window())
-                {
-                    Some(window) => window,
-                    None => {
-                        let window = Self::window_builder_with_id(
-                            app,
-                            "/screenshot-editor",
-                            &_id,
-                            _id.label(),
-                        )
-                        .maximizable(true)
-                        .focused(true)
-                        .build()?;
-                        if let Some(opening) = project_opening.as_mut() {
-                            opening.own_window(&window);
-                        }
-                        lock_window_text_scale(&window);
-                        window
-                    }
-                };
+                let window = self
+                    .window_builder_with_id(app, "/screenshot-editor", &_id, _id.label())
+                    .maximizable(true)
+                    .focused(true)
+                    .build()?;
+                if let Some(opening) = project_opening.as_mut() {
+                    opening.own_window(&window);
+                }
+                lock_window_text_scale(&window);
 
                 fit_content_window_bounds(&window, &_id, true).await;
-                reveal_screenshot_editor(&window);
-                if let CapWindowId::ScreenshotEditor { id } = &_id {
-                    crate::screenshot_editor::spare::release(app, *id);
-                }
-                crate::screenshot_editor::spare::schedule_refill(app.clone());
+
+                window.show().ok();
+                window.set_focus().ok();
 
                 window
             }
@@ -3407,7 +3380,7 @@ impl ShowCapWindow {
         url: impl Into<PathBuf>,
     ) -> WebviewWindowBuilder<'a, Wry, AppHandle<Wry>> {
         let id = self.id(app);
-        Self::window_builder_with_id(app, url, &id, id.label())
+        self.window_builder_with_id(app, url, &id, id.label())
     }
 
     fn window_builder_with_label<'a>(
@@ -3418,10 +3391,11 @@ impl ShowCapWindow {
     ) -> WebviewWindowBuilder<'a, Wry, AppHandle<Wry>> {
         let id = self.id(app);
 
-        Self::window_builder_with_id(app, url, &id, label)
+        self.window_builder_with_id(app, url, &id, label)
     }
 
-    pub(crate) fn window_builder_with_id<'a>(
+    fn window_builder_with_id<'a>(
+        &'a self,
         app: &'a AppHandle<Wry>,
         url: impl Into<PathBuf>,
         id: &CapWindowId,
@@ -3565,7 +3539,7 @@ impl ShowCapWindow {
     }
 }
 
-pub(crate) fn lock_window_text_scale(_window: &WebviewWindow<Wry>) {
+fn lock_window_text_scale(_window: &WebviewWindow<Wry>) {
     #[cfg(windows)]
     {
         let scale_factor = match _window.scale_factor() {
@@ -4107,7 +4081,7 @@ fn project_window_id_for_key(ids: &Mutex<Vec<(PathBuf, u32)>>, key: &Path) -> Op
         .find_map(|(path, id)| (project_window_key(&path) == key).then_some(id))
 }
 
-pub(crate) fn next_project_window_id(counter: &AtomicU32) -> tauri::Result<u32> {
+fn next_project_window_id(counter: &AtomicU32) -> tauri::Result<u32> {
     counter
         .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| {
             value.checked_add(1)
@@ -4141,7 +4115,6 @@ struct ProjectWindowOpening {
     id: CapWindowId,
     existing_window: Option<WebviewWindow>,
     owned_window: Option<WebviewWindow>,
-    spare_claimed: bool,
     committed: bool,
     _gate: tokio::sync::OwnedMutexGuard<()>,
 }
@@ -4154,7 +4127,6 @@ impl ProjectWindowOpening {
         counter: &AtomicU32,
         gates: &ProjectWindowOpenGates,
         make_id: fn(u32) -> CapWindowId,
-        claim_spare: bool,
     ) -> tauri::Result<Self> {
         let key = project_window_key(path);
         let gate = gates.for_path(key.clone()).lock_owned().await;
@@ -4168,21 +4140,13 @@ impl ProjectWindowOpening {
                     id,
                     existing_window: Some(window),
                     owned_window: None,
-                    spare_claimed: false,
                     committed: true,
                     _gate: gate,
                 });
             }
         }
 
-        let spare = claim_spare
-            .then(|| crate::screenshot_editor::spare::claim(app))
-            .flatten();
-        let spare_claimed = spare.is_some();
-        let (numeric_id, owned_window) = match spare {
-            Some((id, window)) => (id, Some(window)),
-            None => (next_project_window_id(counter)?, None),
-        };
+        let numeric_id = next_project_window_id(counter)?;
         let id = make_id(numeric_id);
         {
             let mut entries = ids.lock().unwrap();
@@ -4194,8 +4158,7 @@ impl ProjectWindowOpening {
             ids,
             id,
             existing_window: None,
-            owned_window,
-            spare_claimed,
+            owned_window: None,
             committed: false,
             _gate: gate,
         })
@@ -4203,14 +4166,6 @@ impl ProjectWindowOpening {
 
     fn own_window(&mut self, window: &WebviewWindow) {
         self.owned_window = Some(window.clone());
-    }
-
-    fn claimed_spare_window(&self) -> Option<WebviewWindow> {
-        if self.spare_claimed {
-            self.owned_window.clone()
-        } else {
-            None
-        }
     }
 
     fn commit(&mut self) {
@@ -4224,11 +4179,7 @@ impl Drop for ProjectWindowOpening {
             return;
         }
         let numeric_id = match self.id {
-            CapWindowId::Editor { id } => id,
-            CapWindowId::ScreenshotEditor { id } => {
-                crate::screenshot_editor::spare::release(&self.app, id);
-                id
-            }
+            CapWindowId::Editor { id } | CapWindowId::ScreenshotEditor { id } => id,
             _ => return,
         };
         self.ids

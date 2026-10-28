@@ -7410,7 +7410,6 @@ pub async fn run(recording_logging_handle: LoggingHandle, logs_dir: PathBuf) {
                     tokio::task::spawn_blocking(cap_rendering::prewarm_fonts);
                     tokio::spawn(screenshot_editor::prewarm_screenshot_renderer());
                     target_select_overlay::prewarm::schedule(app.clone());
-                    screenshot_editor::spare::schedule_startup(app.clone());
 
                     #[cfg(target_os = "macos")]
                     {
@@ -8292,8 +8291,7 @@ fn handle_run_event(_handle: &AppHandle, event: tauri::RunEvent) {
 
             let has_window = _handle.webview_windows().iter().any(|(label, _)| {
                 label.starts_with("editor-")
-                    || (label.starts_with("screenshot-editor-")
-                        && !screenshot_editor::spare::is_pending_window(_handle, label))
+                    || label.starts_with("screenshot-editor-")
                     || label.as_str() == "settings"
                     || label.as_str() == "signin"
                     || (should_focus_onboarding && label.as_str() == "onboarding")
@@ -8305,8 +8303,7 @@ fn handle_run_event(_handle: &AppHandle, event: tauri::RunEvent) {
                     .iter()
                     .find(|(label, _)| {
                         label.starts_with("editor-")
-                            || (label.starts_with("screenshot-editor-")
-                                && !screenshot_editor::spare::is_pending_window(_handle, label))
+                            || label.starts_with("screenshot-editor-")
                             || label.as_str() == "settings"
                             || label.as_str() == "signin"
                             || (should_focus_onboarding && label.as_str() == "onboarding")
@@ -8468,16 +8465,12 @@ fn has_open_editor_window(app: &AppHandle) -> bool {
 }
 
 fn restore_main_windows_if_no_editors(app: &AppHandle, reveal_main: bool) {
-    let has_other_editors =
-        app.webview_windows()
-            .keys()
-            .any(|label| match CapWindowId::from_str(label) {
-                Ok(CapWindowId::Editor { .. }) => true,
-                Ok(CapWindowId::ScreenshotEditor { .. }) => {
-                    !screenshot_editor::spare::is_pending_window(app, label)
-                }
-                _ => false,
-            });
+    let has_other_editors = app.webview_windows().keys().any(|label| {
+        matches!(
+            CapWindowId::from_str(label),
+            Ok(CapWindowId::Editor { .. } | CapWindowId::ScreenshotEditor { .. })
+        )
+    });
 
     if !has_other_editors {
         if reveal_main && CapWindowId::Settings.get(app).is_none() {

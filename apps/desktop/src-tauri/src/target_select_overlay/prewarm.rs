@@ -36,7 +36,7 @@ fn screenshot_editor_exists(app: &AppHandle) -> bool {
         matches!(
             CapWindowId::from_str(label),
             Ok(CapWindowId::ScreenshotEditor { .. })
-        ) && !crate::screenshot_editor::spare::is_pending_window(app, label)
+        )
     })
 }
 

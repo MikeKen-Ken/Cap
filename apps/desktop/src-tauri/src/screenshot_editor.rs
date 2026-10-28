@@ -1,5 +1,3 @@
-pub(crate) mod spare;
-
 use crate::PendingScreenshots;
 use crate::frame_ws::{WSFrame, create_watch_frame_ws};
 use crate::gpu_context;
@@ -898,8 +896,6 @@ pub async fn create_screenshot_editor_instance(
     else {
         return Err("Invalid window".to_string());
     };
-
-    spare::wait_for_assignment(window.app_handle(), id).await?;
 
     let path = {
         let window_ids = ScreenshotEditorWindowIds::get(window.app_handle());
