@@ -312,7 +312,7 @@ pub fn sample_pointer() -> Option<(LogicalPosition, bool)> {
 }
 
 fn primary_button_down() -> bool {
-    unsafe { GetAsyncKeyState(VK_LBUTTON) < 0 }
+    unsafe { GetAsyncKeyState(VK_LBUTTON.0 as i32) < 0 }
 }
 
 fn get_cursor_position() -> Option<PhysicalPosition> {

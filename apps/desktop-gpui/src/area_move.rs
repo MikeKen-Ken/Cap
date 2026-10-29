@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use gpui::{App, AppContext as _, Context};
+use gpui::{App, Context};
 use scap_targets::DisplayId;
 
 use super::{AreaRect, OverlayWindow, TargetSelect, snap_area_rect};
@@ -50,34 +50,27 @@ pub(crate) fn begin_area_move(gesture: AreaMoveGesture, cx: &mut App) {
         started: Instant::now(),
         ..gesture
     };
-    if TargetSelect::global(cx)
-        .update(cx, |select, cx| {
-            select.area_move = Some(started);
-            // Moves keep arriving after the pointer leaves the overlay that
-            // received the press: that window's mouse stream stops at its
-            // edge, so the gesture follows the global cursor on a timer.
-            select.area_follow = Some(cx.spawn(async move |this, cx| {
-                loop {
-                    cx.background_executor()
-                        .timer(Duration::from_millis(16))
-                        .await;
-                    let active = this
-                        .read_with(cx, |this, _| this.area_move.is_some())
-                        .unwrap_or(false);
-                    if !active {
-                        return;
-                    }
-                    if cx.update(follow_area_move).is_err() {
-                        return;
-                    }
+    TargetSelect::global(cx).update(cx, |select, cx| {
+        select.area_move = Some(started);
+        // Moves keep arriving after the pointer leaves the overlay that
+        // received the press: that window's mouse stream stops at its
+        // edge, so the gesture follows the global cursor on a timer.
+        select.area_follow = Some(cx.spawn(async move |this, cx| {
+            loop {
+                cx.background_executor()
+                    .timer(Duration::from_millis(16))
+                    .await;
+                let active = this
+                    .read_with(cx, |this, _| this.area_move.is_some())
+                    .unwrap_or(false);
+                if !active {
+                    return;
                 }
-            }));
-            cx.notify();
-        })
-        .is_err()
-    {
-        return;
-    }
+                cx.update(follow_area_move);
+            }
+        }));
+        cx.notify();
+    });
     cx.defer(move |cx| {
         if is_active(cx) {
             follow_area_move(cx);
@@ -86,17 +79,12 @@ pub(crate) fn begin_area_move(gesture: AreaMoveGesture, cx: &mut App) {
 }
 
 pub(crate) fn end_area_move(cx: &mut App) {
-    if TargetSelect::global(cx)
-        .update(cx, |select, cx| {
-            select.area_follow = None;
-            if select.area_move.take().is_some() {
-                cx.notify();
-            }
-        })
-        .is_err()
-    {
-        return;
-    }
+    TargetSelect::global(cx).update(cx, |select, cx| {
+        select.area_follow = None;
+        if select.area_move.take().is_some() {
+            cx.notify();
+        }
+    });
 }
 
 pub(crate) fn gesture_from_press(
@@ -123,7 +111,7 @@ fn follow_area_move(cx: &mut App) {
     if !sample.primary_down && gesture.started.elapsed() > RELEASE_GRACE {
         // The timer is this task. Dropping it here would cancel the future
         // that is running, so only the gesture is cleared and the loop exits.
-        let _ = TargetSelect::global(cx).update(cx, |select, cx| {
+        TargetSelect::global(cx).update(cx, |select, cx| {
             if select.area_move.take().is_some() {
                 cx.notify();
             }

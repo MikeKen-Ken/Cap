@@ -93,7 +93,7 @@ pub async fn capture_displays(
 #[specta::specta]
 pub fn screenshot_freeze_preview(window: WebviewWindow, display_id: String) -> Option<String> {
     let app = window.app_handle();
-    let preview = with_inner(&app, |inner| {
+    let preview = with_inner(app, |inner| {
         inner
             .frames
             .get(&display_id)
