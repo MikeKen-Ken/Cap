@@ -275,7 +275,7 @@ fn crop_moved(previous: AreaRect, next: AreaRect) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{AreaRect, DisplayFrame, selection_on_display};
+    use super::{AreaRect, DisplayFrame, ScreenRect, selection_on_display};
 
     fn frame(x: f32, y: f32, width: f32, height: f32) -> DisplayFrame {
         DisplayFrame {
