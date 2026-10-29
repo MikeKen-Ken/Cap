@@ -87,16 +87,7 @@ impl HotkeysStore {
 
     fn with_defaults() -> Self {
         Self {
-            hotkeys: HashMap::from([(
-                HotkeyAction::ScreenshotArea,
-                Hotkey {
-                    code: Code::KeyS,
-                    meta: false,
-                    ctrl: false,
-                    alt: false,
-                    shift: true,
-                },
-            )]),
+            hotkeys: HashMap::from([(HotkeyAction::ScreenshotArea, screenshot_area_hotkey())]),
         }
     }
 
@@ -111,6 +102,38 @@ impl HotkeysStore {
 pub struct OnEscapePress;
 
 pub type HotkeysState = Mutex<HotkeysStore>;
+
+fn screenshot_area_hotkey() -> Hotkey {
+    Hotkey {
+        code: Code::KeyH,
+        meta: false,
+        ctrl: true,
+        alt: false,
+        shift: true,
+    }
+}
+
+fn previous_screenshot_area_hotkey() -> Hotkey {
+    Hotkey {
+        code: Code::KeyS,
+        meta: false,
+        ctrl: false,
+        alt: false,
+        shift: true,
+    }
+}
+
+fn upgrade_screenshot_area_shortcut(store: &mut HotkeysStore) -> bool {
+    match store.hotkeys.get(&HotkeyAction::ScreenshotArea) {
+        Some(hotkey) if *hotkey == previous_screenshot_area_hotkey() => {
+            store
+                .hotkeys
+                .insert(HotkeyAction::ScreenshotArea, screenshot_area_hotkey());
+            true
+        }
+        _ => false,
+    }
+}
 
 fn clean_capture_shortcut() -> Shortcut {
     Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::F9)
@@ -345,7 +368,7 @@ pub fn init(app: &AppHandle) {
     )
     .unwrap();
 
-    let store = match HotkeysStore::get(app) {
+    let mut store = match HotkeysStore::get(app) {
         Ok(Some(s)) => s,
         Ok(None) => {
             let store = HotkeysStore::with_defaults();
@@ -359,6 +382,12 @@ pub fn init(app: &AppHandle) {
             HotkeysStore::default()
         }
     };
+
+    if upgrade_screenshot_area_shortcut(&mut store)
+        && let Err(e) = store.persist(app)
+    {
+        eprintln!("Failed to save screenshot area shortcut: {e}");
+    }
 
     let global_shortcut = app.global_shortcut();
     for hotkey in store.hotkeys.values() {
@@ -764,6 +793,43 @@ mod tests {
         spawn_shortcut_task,
     };
     use std::time::Duration;
+
+    #[test]
+    fn screenshot_area_default_is_ctrl_shift_h() {
+        let store = super::HotkeysStore::with_defaults();
+        let hotkey = store
+            .hotkeys
+            .get(&super::HotkeyAction::ScreenshotArea)
+            .unwrap();
+        assert_eq!(hotkey.code, super::Code::KeyH);
+        assert!(hotkey.ctrl && hotkey.shift && !hotkey.alt && !hotkey.meta);
+    }
+
+    #[test]
+    fn screenshot_area_upgrade_replaces_only_the_old_default() {
+        let mut store = super::HotkeysStore::default();
+        store.hotkeys.insert(
+            super::HotkeyAction::ScreenshotArea,
+            super::previous_screenshot_area_hotkey(),
+        );
+        assert!(super::upgrade_screenshot_area_shortcut(&mut store));
+        assert_eq!(
+            store.hotkeys.get(&super::HotkeyAction::ScreenshotArea),
+            Some(&super::screenshot_area_hotkey())
+        );
+
+        store.hotkeys.insert(
+            super::HotkeyAction::ScreenshotArea,
+            super::Hotkey {
+                code: super::Code::KeyA,
+                meta: false,
+                ctrl: true,
+                alt: false,
+                shift: false,
+            },
+        );
+        assert!(!super::upgrade_screenshot_area_shortcut(&mut store));
+    }
 
     #[test]
     fn microphone_confirmation_does_not_probe_without_permission_or_selection() {

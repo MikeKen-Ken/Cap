@@ -85,6 +85,7 @@ import {
 } from "~/utils/queries";
 import { isRecordingStartCancelled } from "~/utils/recording";
 import { createRecordingMenuPopup } from "~/utils/recording-menu";
+import { screenshotSelectionCapturesFullDisplay } from "~/utils/screenshot-selection";
 import {
 	type CanvasControls,
 	createImageDataWS,
@@ -870,21 +871,7 @@ function Inner() {
 								}
 								return params.isHoveredDisplay === "true";
 							});
-							async function saveAreaScreenshot(cropBounds: CropBounds) {
-								const target: ScreenCaptureTarget = {
-									variant: "area",
-									screen: displayId(),
-									bounds: {
-										position: {
-											x: cropBounds.x,
-											y: cropBounds.y,
-										},
-										size: {
-											width: cropBounds.width,
-											height: cropBounds.height,
-										},
-									},
-								};
+							async function saveScreenshot(target: ScreenCaptureTarget) {
 								try {
 									const path = await commands.saveFrozenAreaScreenshot(target);
 									const shouldOpenEditor =
@@ -902,8 +889,59 @@ function Inner() {
 								}
 							}
 
+							async function commitScreenshotSelection(bounds: CropBounds) {
+								if (screenshotSelectionCapturesFullDisplay(bounds)) {
+									await saveScreenshot({
+										variant: "display",
+										id: displayId(),
+									});
+									return;
+								}
+								if (
+									bounds.width < MIN_SCREENSHOT_SIZE.width ||
+									bounds.height < MIN_SCREENSHOT_SIZE.height
+								) {
+									return;
+								}
+								await saveScreenshot({
+									variant: "area",
+									screen: displayId(),
+									bounds: {
+										position: {
+											x: bounds.x,
+											y: bounds.y,
+										},
+										size: {
+											width: bounds.width,
+											height: bounds.height,
+										},
+									},
+								});
+							}
+
 							const handoff = createAreaDisplayHandoff({
 								screenId: () => displayId(),
+								frame: () => {
+									const bounds = areaDisplayInfo.data?.logical_bounds;
+									if (
+										bounds?.size &&
+										bounds.size.width > 0 &&
+										bounds.size.height > 0
+									) {
+										return {
+											x: bounds.position.x,
+											y: bounds.position.y,
+											width: bounds.size.width,
+											height: bounds.size.height,
+										};
+									}
+									return {
+										x: window.screenX,
+										y: window.screenY,
+										width: window.innerWidth,
+										height: window.innerHeight,
+									};
+								},
 								crop,
 								interacting: isInteracting,
 								applyCrop: (bounds) => {
@@ -926,7 +964,7 @@ function Inner() {
 										});
 									}
 									if (options.mode === "screenshot") {
-										void saveAreaScreenshot(bounds);
+										void commitScreenshotSelection(bounds);
 									}
 								},
 								claimActive: () => setLocalPointerInside(true),
@@ -1354,8 +1392,8 @@ function Inner() {
 								if (was && !interacting) {
 									if (handoff.cursorOutside()) return;
 									persistLockedSelection();
-									if (options.mode === "screenshot" && isValid()) {
-										await saveAreaScreenshot(crop());
+									if (options.mode === "screenshot") {
+										await commitScreenshotSelection(crop());
 									}
 								}
 							});
@@ -1380,9 +1418,12 @@ function Inner() {
 												class={`${LIQUID_GLASS_SURFACE_CLASS} flex h-12 items-center gap-1.5 p-1.5 text-gray-12`}
 											>
 												<div class="min-w-28 px-2 text-base font-normal leading-none tracking-[-0.01em] tabular-nums">
-													{isValid()
-														? `${Math.round(crop().width)} × ${Math.round(crop().height)}`
-														: "Draw an area"}
+													{options.mode === "screenshot" &&
+													screenshotSelectionCapturesFullDisplay(crop())
+														? "Click for full screen"
+														: isValid()
+															? `${Math.round(crop().width)} × ${Math.round(crop().height)}`
+															: "Draw an area"}
 												</div>
 
 												<div class="h-6 w-px bg-gray-5" />

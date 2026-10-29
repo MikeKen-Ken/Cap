@@ -111,7 +111,7 @@ pub async fn save_frozen_area_screenshot(
     app: AppHandle,
     target: ScreenCaptureTarget,
 ) -> Result<PathBuf, String> {
-    let Some(display_id) = area_display_id(&target) else {
+    let Some(display_id) = frozen_display_id(&target) else {
         return crate::recording::take_screenshot(app, target).await;
     };
     let Some(image) = take_frame(&app, &display_id) else {
@@ -121,9 +121,10 @@ pub async fn save_frozen_area_screenshot(
     crate::recording::persist_captured_screenshot(app, cropped, target).await
 }
 
-fn area_display_id(target: &ScreenCaptureTarget) -> Option<String> {
+fn frozen_display_id(target: &ScreenCaptureTarget) -> Option<String> {
     match target {
         ScreenCaptureTarget::Area { screen, .. } => Some(screen.to_string()),
+        ScreenCaptureTarget::Display { id } => Some(id.to_string()),
         _ => None,
     }
 }
@@ -238,4 +239,27 @@ fn with_inner<T>(app: &AppHandle, f: impl FnOnce(&mut Inner) -> T) -> T {
     let store = app.state::<FreezeStore>();
     let mut inner = store.inner.lock().unwrap_or_else(PoisonError::into_inner);
     f(&mut inner)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_full_display_shot_reuses_the_frozen_frame_for_that_display() {
+        let display = ScreenCaptureTarget::Display {
+            id: "1".parse().unwrap(),
+        };
+        let area = ScreenCaptureTarget::Area {
+            screen: "1".parse().unwrap(),
+            bounds: scap_targets::bounds::LogicalBounds::new(
+                scap_targets::bounds::LogicalPosition::new(0.0, 0.0),
+                scap_targets::bounds::LogicalSize::new(0.0, 0.0),
+            ),
+        };
+
+        assert_eq!(frozen_display_id(&display).as_deref(), Some("1"));
+        assert_eq!(frozen_display_id(&area).as_deref(), Some("1"));
+        assert_eq!(frozen_display_id(&ScreenCaptureTarget::CameraOnly), None);
+    }
 }

@@ -37,6 +37,17 @@ impl Display {
         DisplayImpl::get_containing_cursor().map(Self)
     }
 
+    /// Global logical cursor position, and whether the primary button is held.
+    ///
+    /// Area drags use this because a press captured by one overlay stops
+    /// delivering moves once the pointer crosses onto another display.
+    pub fn sample_pointer() -> Option<PointerSample> {
+        platform::sample_pointer().map(|(position, primary_down)| PointerSample {
+            position,
+            primary_down,
+        })
+    }
+
     pub fn name(&self) -> Option<String> {
         self.0.name()
     }
@@ -64,6 +75,12 @@ impl Display {
             None
         }
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct PointerSample {
+    pub position: LogicalPosition,
+    pub primary_down: bool,
 }
 
 /// Geometry of the camera housing ("notch") on a built-in MacBook display, as

@@ -3,6 +3,7 @@ import {
 	containsPoint,
 	parseAreaHandoff,
 	parseAreaHandoffAck,
+	rectInsideFrame,
 	type ScreenRect,
 	selectionOnWindow,
 } from "./area-display-handoff";
@@ -37,6 +38,14 @@ describe("containsPoint", () => {
 	});
 });
 
+describe("rectInsideFrame", () => {
+	it("is false once the selection crosses onto the next display", () => {
+		expect(
+			rectInsideFrame({ x: 1700, y: 400, width: 400, height: 300 }, left),
+		).toBe(false);
+	});
+});
+
 describe("handoff messages", () => {
 	it("rejects malformed payloads", () => {
 		expect(parseAreaHandoff("not json")).toBeNull();
@@ -52,6 +61,8 @@ describe("handoff messages", () => {
 			bounds: { x: 2000, y: 10, width: 100, height: 80 },
 			cursorX: 2100,
 			cursorY: 40,
+			grabDx: 40,
+			grabDy: 20,
 		};
 		expect(parseAreaHandoff(JSON.stringify(message))).toEqual(message);
 	});

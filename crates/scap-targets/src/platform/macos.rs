@@ -265,6 +265,14 @@ impl DisplayImpl {
     }
 }
 
+pub fn sample_pointer() -> Option<(LogicalPosition, bool)> {
+    Some((get_cursor_position()?, primary_button_down()))
+}
+
+fn primary_button_down() -> bool {
+    unsafe { cocoa::appkit::NSEvent::pressedMouseButtons(cocoa::base::nil) & 1 != 0 }
+}
+
 fn get_cursor_position() -> Option<LogicalPosition> {
     let event_source = core_graphics::event_source::CGEventSource::new(
         core_graphics::event_source::CGEventSourceStateID::CombinedSessionState,

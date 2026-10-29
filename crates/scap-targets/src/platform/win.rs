@@ -37,6 +37,7 @@ use windows::{
                 GetDpiForMonitor, GetDpiForWindow, GetProcessDpiAwareness, MDT_EFFECTIVE_DPI,
                 PROCESS_PER_MONITOR_DPI_AWARE,
             },
+            Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON},
             Shell::{
                 ExtractIconExW, SHFILEINFOW, SHGFI_ICON, SHGFI_LARGEICON, SHGFI_SMALLICON,
                 SHGetFileInfoW,
@@ -292,6 +293,26 @@ impl DisplayImpl {
         let interop = windows::core::factory::<GraphicsCaptureItem, IGraphicsCaptureItemInterop>()?;
         unsafe { interop.CreateForMonitor(self.0) }
     }
+}
+
+pub fn sample_pointer() -> Option<(LogicalPosition, bool)> {
+    let cursor = get_cursor_position()?;
+    let display = DisplayImpl::get_containing_cursor()?;
+    let physical = display.physical_bounds()?;
+    let logical = display.logical_bounds()?;
+    let scale_x = physical.size().width() / logical.size().width().max(1.);
+    let scale_y = physical.size().height() / logical.size().height().max(1.);
+    Some((
+        LogicalPosition::new(
+            logical.position().x() + (cursor.x() - physical.position().x()) / scale_x,
+            logical.position().y() + (cursor.y() - physical.position().y()) / scale_y,
+        ),
+        primary_button_down(),
+    ))
+}
+
+fn primary_button_down() -> bool {
+    unsafe { GetAsyncKeyState(VK_LBUTTON) < 0 }
 }
 
 fn get_cursor_position() -> Option<PhysicalPosition> {

@@ -20,6 +20,8 @@ export type AreaHandoffMessage = {
 	bounds: ScreenRect;
 	cursorX: number;
 	cursorY: number;
+	grabDx: number;
+	grabDy: number;
 };
 
 export type AreaHandoffAck = {
@@ -112,7 +114,9 @@ function isHandoff(value: unknown): value is AreaHandoffMessage {
 			message.phase === "cancel") &&
 		isRect(message.bounds) &&
 		typeof message.cursorX === "number" &&
-		typeof message.cursorY === "number"
+		typeof message.cursorY === "number" &&
+		typeof message.grabDx === "number" &&
+		typeof message.grabDy === "number"
 	);
 }
 
@@ -135,8 +139,18 @@ function writeStorage(key: string, value: unknown) {
 	}
 }
 
+export function rectInsideFrame(rect: ScreenRect, frame: ScreenRect): boolean {
+	return (
+		rect.x >= frame.x &&
+		rect.y >= frame.y &&
+		rect.x + rect.width <= frame.x + frame.width &&
+		rect.y + rect.height <= frame.y + frame.height
+	);
+}
+
 export function createAreaDisplayHandoff(options: {
 	screenId: () => string;
+	frame: () => ScreenRect;
 	crop: () => CropBounds;
 	interacting: () => boolean;
 	applyCrop: (bounds: CropBounds) => void;
@@ -149,7 +163,9 @@ export function createAreaDisplayHandoff(options: {
 	const [receiving, setReceiving] = createSignal(false);
 	const [cursorOutside, setCursorOutside] = createSignal(false);
 	let outboundSeq = 0;
-	let offset = { dx: 0, dy: 0 };
+	let grab = { dx: 0, dy: 0, width: 0, height: 0 };
+	let driving = false;
+	let settled = false;
 	let lastMove: AreaHandoffMessage | null = null;
 	let awaitingClear: number | null = null;
 	let preview: { seq: number; fromScreenId: string } | null = null;
@@ -179,7 +195,7 @@ export function createAreaDisplayHandoff(options: {
 
 	const applyIncoming = (message: AreaHandoffMessage) => {
 		if (message.fromScreenId === options.screenId()) return;
-		const frame = windowFrame();
+		const frame = options.frame();
 		const inside = containsPoint(frame, message.cursorX, message.cursorY);
 		if (message.phase === "cancel" || !inside) {
 			if (
@@ -190,7 +206,15 @@ export function createAreaDisplayHandoff(options: {
 			}
 			return;
 		}
-		const local = selectionOnWindow(message.bounds, frame);
+		const local = selectionOnWindow(
+			{
+				x: message.cursorX - message.grabDx,
+				y: message.cursorY - message.grabDy,
+				width: message.bounds.width,
+				height: message.bounds.height,
+			},
+			frame,
+		);
 		if (!local) return;
 		options.applyCrop(local);
 		options.claimActive();
@@ -202,56 +226,143 @@ export function createAreaDisplayHandoff(options: {
 			byScreenId: options.screenId(),
 			phase: message.phase === "drop" ? "accept" : "preview",
 		} satisfies AreaHandoffAck);
+		setHandedOff(false);
 		if (message.phase === "drop") {
 			setReceiving(false);
 			preview = null;
-			options.onAccept(local);
+			if (!settled) {
+				settled = true;
+				options.onAccept(local);
+			}
 		}
 	};
 
+	const selectionAt = (cursorX: number, cursorY: number): ScreenRect => ({
+		x: cursorX - grab.dx,
+		y: cursorY - grab.dy,
+		width: grab.width,
+		height: grab.height,
+	});
+
+	const sameSize = () => {
+		const bounds = options.crop();
+		return (
+			Math.abs(bounds.width - grab.width) <= 1 &&
+			Math.abs(bounds.height - grab.height) <= 1
+		);
+	};
+
 	const publishMove = (event: PointerEvent) => {
-		const frame = windowFrame();
-		const outside = !containsPoint(frame, event.screenX, event.screenY);
+		if (grab.width < 1 || grab.height < 1 || !sameSize()) return;
+		const frame = options.frame();
+		const bounds = selectionAt(event.screenX, event.screenY);
+		const outside =
+			!containsPoint(frame, event.screenX, event.screenY) ||
+			!rectInsideFrame(bounds, frame);
 		if (!outside) {
-			const bounds = options.crop();
-			offset = {
-				dx: event.screenX - (frame.x + bounds.x),
-				dy: event.screenY - (frame.y + bounds.y),
-			};
 			if (cursorOutside()) {
 				publish({
 					seq: outboundSeq,
 					fromScreenId: options.screenId(),
 					phase: "cancel",
 					bounds: {
-						x: frame.x + bounds.x,
-						y: frame.y + bounds.y,
-						width: bounds.width,
-						height: bounds.height,
+						x: frame.x + options.crop().x,
+						y: frame.y + options.crop().y,
+						width: grab.width,
+						height: grab.height,
 					},
 					cursorX: event.screenX,
 					cursorY: event.screenY,
+					grabDx: grab.dx,
+					grabDy: grab.dy,
 				});
 				setCursorOutside(false);
 				setHandedOff(false);
 			}
 			return;
 		}
-		const bounds = options.crop();
-		if (bounds.width < 1 || bounds.height < 1) return;
 		setCursorOutside(true);
 		publish({
 			seq: outboundSeq,
 			fromScreenId: options.screenId(),
 			phase: "move",
-			bounds: {
-				x: event.screenX - offset.dx,
-				y: event.screenY - offset.dy,
-				width: bounds.width,
-				height: bounds.height,
-			},
+			bounds,
 			cursorX: event.screenX,
 			cursorY: event.screenY,
+			grabDx: grab.dx,
+			grabDy: grab.dy,
+		});
+	};
+
+	const showForeign = (
+		screen: ScreenRect,
+		cursorX: number,
+		cursorY: number,
+	) => {
+		const frame = options.frame();
+		if (!containsPoint(frame, cursorX, cursorY)) return false;
+		const local = selectionOnWindow(screen, frame);
+		if (!local) return false;
+		options.applyCrop(local);
+		options.claimActive();
+		setReceiving(true);
+		setHandedOff(false);
+		return true;
+	};
+
+	const adopt = (event: PointerEvent) => {
+		if (driving || event.buttons !== 1) return;
+		let raw: string | null = null;
+		try {
+			raw = localStorage.getItem(AREA_HANDOFF_KEY);
+		} catch {
+			return;
+		}
+		const message = parseAreaHandoff(raw);
+		if (!message || message.phase !== "move") return;
+		if (message.fromScreenId === options.screenId()) return;
+		const screen = {
+			x: event.screenX - message.grabDx,
+			y: event.screenY - message.grabDy,
+			width: message.bounds.width,
+			height: message.bounds.height,
+		};
+		if (!showForeign(screen, event.screenX, event.screenY)) return;
+		driving = true;
+		grab = {
+			dx: message.grabDx,
+			dy: message.grabDy,
+			width: message.bounds.width,
+			height: message.bounds.height,
+		};
+		preview = { seq: message.seq, fromScreenId: message.fromScreenId };
+		writeStorage(AREA_HANDOFF_ACK_KEY, {
+			seq: message.seq,
+			fromScreenId: message.fromScreenId,
+			byScreenId: options.screenId(),
+			phase: "preview",
+		} satisfies AreaHandoffAck);
+	};
+
+	const drive = (event: PointerEvent) => {
+		const screen = selectionAt(event.screenX, event.screenY);
+		if (!showForeign(screen, event.screenX, event.screenY)) {
+			driving = false;
+			setReceiving(false);
+			options.clearCrop();
+			options.releaseActive();
+			publishMove(event);
+			return;
+		}
+		publish({
+			seq: outboundSeq,
+			fromScreenId: options.screenId(),
+			phase: "move",
+			bounds: screen,
+			cursorX: event.screenX,
+			cursorY: event.screenY,
+			grabDx: grab.dx,
+			grabDy: grab.dy,
 		});
 	};
 
@@ -279,21 +390,38 @@ export function createAreaDisplayHandoff(options: {
 		};
 
 		const onPointerDown = (event: PointerEvent) => {
-			if (event.button !== 0) return;
+			if (event.button !== 0 || driving) return;
 			outboundSeq += 1;
 			lastMove = null;
-			const frame = windowFrame();
+			settled = false;
+			const frame = options.frame();
 			const bounds = options.crop();
-			offset = {
+			grab = {
 				dx: event.screenX - (frame.x + bounds.x),
 				dy: event.screenY - (frame.y + bounds.y),
+				width: bounds.width,
+				height: bounds.height,
 			};
 			setCursorOutside(false);
 			setHandedOff(false);
 		};
 
 		const onPointerMove = (event: PointerEvent) => {
-			if (!options.interacting()) return;
+			if (driving) {
+				pendingMove = event;
+				if (moveFrame) return;
+				moveFrame = window.requestAnimationFrame(() => {
+					moveFrame = 0;
+					const next = pendingMove;
+					pendingMove = null;
+					if (next && driving) drive(next);
+				});
+				return;
+			}
+			if (!options.interacting()) {
+				adopt(event);
+				return;
+			}
 			pendingMove = event;
 			if (moveFrame) return;
 			moveFrame = window.requestAnimationFrame(() => {
@@ -310,6 +438,21 @@ export function createAreaDisplayHandoff(options: {
 				moveFrame = 0;
 			}
 			pendingMove = null;
+			if (driving) {
+				drive(event);
+				const frame = options.frame();
+				const local = selectionOnWindow(
+					selectionAt(event.screenX, event.screenY),
+					frame,
+				);
+				driving = false;
+				setReceiving(false);
+				if (local && !settled) {
+					settled = true;
+					options.onAccept(local);
+				}
+				return;
+			}
 			if (options.interacting()) publishMove(event);
 			if (!cursorOutside() || !lastMove || lastMove.phase === "cancel") return;
 			awaitingClear = outboundSeq;

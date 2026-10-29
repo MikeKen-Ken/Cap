@@ -45,6 +45,9 @@ use crate::{
     theme::Theme,
 };
 
+#[path = "area_move.rs"]
+mod area_move;
+
 /// How often the cursor probe runs. The Tauri loop sleeps 50ms between
 /// `Display::get_containing_cursor` / `Window::get_topmost_at_cursor` reads;
 /// this one is a touch lazier because each probe walks the whole window list
@@ -58,6 +61,14 @@ const AREA_MIN_SIZE: f32 = 150.;
 /// `MIN_SCREENSHOT_SIZE` in the TSX: a screenshot area only has to be a
 /// pixel, not the 150px a recording needs.
 const SCREENSHOT_MIN_SIZE: f32 = 1.;
+
+/// `FULL_DISPLAY_SCREENSHOT_MAX` in `screenshot-selection.ts`. A click or a
+/// box smaller than this on both sides captures the whole display.
+const FULL_DISPLAY_SCREENSHOT_MAX: f32 = 16.;
+
+fn screenshot_selection_captures_full_display(width: f32, height: f32) -> bool {
+    width < FULL_DISPLAY_SCREENSHOT_MAX && height < FULL_DISPLAY_SCREENSHOT_MAX
+}
 
 fn area_min_size(mode: Mode) -> f32 {
     match mode {
@@ -261,6 +272,8 @@ pub struct TargetSelect {
     microphone_fill: f32,
     /// App icons by window id, fetched once per window.
     icons: HashMap<String, Arc<gpui::Image>>,
+    area_move: Option<area_move::AreaMoveGesture>,
+    area_follow: Option<gpui::Task<()>>,
     _poll: Option<gpui::Task<()>>,
 }
 
@@ -277,6 +290,8 @@ impl TargetSelect {
             pinned_window: None,
             microphone_fill: 0.,
             icons: HashMap::new(),
+            area_move: None,
+            area_follow: None,
             _poll: None,
         });
         cx.set_global(TargetSelectGlobal(select.clone()));
@@ -301,6 +316,8 @@ impl TargetSelect {
             cx.notify();
             return;
         }
+        self.area_move = None;
+        self.area_follow = None;
         self.mode = mode;
         self.hovered_window = None;
         if mode.is_some() {
@@ -583,6 +600,8 @@ pub struct OverlayWindow {
     /// Logical size, which is this window's size and the space every
     /// coordinate here lives in.
     display_size: (f32, f32),
+    /// Top-left of this display in virtual-screen logical points.
+    display_origin: (f32, f32),
     controls_work_area: AreaRect,
     /// Physical pixels, for the `1920x1080 · 60FPS` line.
     physical_size: Option<(u32, u32)>,
@@ -679,6 +698,11 @@ impl OverlayWindow {
                 .name()
                 .unwrap_or_else(|| format!("Display {}", display.id())),
             display_size: logical,
+            display_origin: display
+                .raw_handle()
+                .logical_bounds()
+                .map(|bounds| (bounds.position().x() as f32, bounds.position().y() as f32))
+                .unwrap_or((0., 0.)),
             controls_work_area,
             physical_size: display
                 .physical_size()
@@ -1481,7 +1505,10 @@ impl OverlayWindow {
     ) -> gpui::Stateful<gpui::Div> {
         let interacting = self.drag.is_some();
         // `shouldShowOverlay = isInteracting() || isActiveDisplay()`.
-        let visible = self.recording_area || interacting || self.is_active_display(window, cx);
+        let visible = self.recording_area
+            || interacting
+            || self.is_active_display(window, cx)
+            || self.crop.is_some();
         let crop = self.crop;
         let min = area_min_size(self.select.read(cx).recording_mode);
         let valid = crop.is_some_and(|crop| crop.is_valid_for(min));
@@ -1568,9 +1595,10 @@ impl OverlayWindow {
             return root;
         }
         if crop.is_none() && !interacting {
-            root = root.child(self.render_selection_hint());
+            let screenshot = self.select.read(cx).recording_mode == Mode::Screenshot;
+            root = root.child(self.render_selection_hint(screenshot));
         }
-        root = root.child(self.render_area_toolbar(crop, valid));
+        root = root.child(self.render_area_toolbar(crop, valid, cx));
         if crop.is_some() {
             root.child(self.render_area_controls(crop, valid, cx))
         } else {
@@ -1702,7 +1730,7 @@ impl OverlayWindow {
             .collect()
     }
 
-    fn render_selection_hint(&self) -> impl IntoElement {
+    fn render_selection_hint(&self, screenshot: bool) -> impl IntoElement {
         let cursor_path = if cfg!(target_os = "windows") {
             "onboarding/cursor-windows.svg"
         } else {
@@ -1806,7 +1834,11 @@ impl OverlayWindow {
                         div()
                             .text_size(px(16.))
                             .font_weight(FontWeight::MEDIUM)
-                            .child("Click and drag to select an area"),
+                            .child(if screenshot {
+                                "Click for a full-screen shot, or drag to select an area"
+                            } else {
+                                "Click and drag to select an area"
+                            }),
                     ),
             )
     }
@@ -1815,10 +1847,22 @@ impl OverlayWindow {
     /// liquid-glass surface, `min-w-28 px-2 text-base tabular-nums`. The
     /// aspect-ratio, reset, fill and lock controls that share this bar in the
     /// TSX are deferred (README).
-    fn render_area_toolbar(&self, crop: Option<AreaRect>, valid: bool) -> impl IntoElement {
-        let label = match crop.filter(|_| valid) {
-            Some(crop) => format!("{} × {}", crop.width.round(), crop.height.round()),
-            None => "Draw an area".to_string(),
+    fn render_area_toolbar(
+        &self,
+        crop: Option<AreaRect>,
+        valid: bool,
+        cx: &App,
+    ) -> impl IntoElement {
+        let screenshot = self.select.read(cx).recording_mode == Mode::Screenshot;
+        let full_display = crop.is_some_and(|crop| {
+            screenshot && screenshot_selection_captures_full_display(crop.width, crop.height)
+        });
+        let label = if let Some(crop) = crop.filter(|_| valid && !full_display) {
+            format!("{} × {}", crop.width.round(), crop.height.round())
+        } else if screenshot {
+            "Click for full screen".to_string()
+        } else {
+            "Draw an area".to_string()
         };
 
         div()
@@ -2279,6 +2323,9 @@ impl OverlayWindow {
         if self.recording_area {
             return;
         }
+        if area_move::is_active(cx) {
+            area_move::end_area_move(cx);
+        }
         let point = (f32::from(position.x), f32::from(position.y));
         self.snap_guides.clear();
 
@@ -2292,10 +2339,18 @@ impl OverlayWindow {
                     height: 0.,
                 }),
             }),
-            Some(AreaZone::Inside) => Some(AreaDrag::Move {
-                grab: point,
-                start: self.crop.unwrap(),
-            }),
+            Some(AreaZone::Inside) => {
+                let crop = self.crop.unwrap();
+                let cursor = self.screen_cursor(point);
+                area_move::begin_area_move(
+                    area_move::gesture_from_press(cursor, self.display_origin, crop),
+                    cx,
+                );
+                Some(AreaDrag::Move {
+                    grab: point,
+                    start: crop,
+                })
+            }
             None => {
                 // A press outside the selection starts a fresh one, the way the
                 // Cropper's full-screen "Start selection" button does.
@@ -2312,8 +2367,30 @@ impl OverlayWindow {
         cx.notify();
     }
 
+    fn screen_cursor(&self, local: (f32, f32)) -> (f32, f32) {
+        if let Some(sample) = scap_targets::Display::sample_pointer() {
+            let cursor = (sample.position.x() as f32, sample.position.y() as f32);
+            if cursor.0.is_finite() && cursor.1.is_finite() {
+                return cursor;
+            }
+        }
+        (
+            self.display_origin.0 + local.0,
+            self.display_origin.1 + local.1,
+        )
+    }
+
     fn area_mouse_move(&mut self, position: Point<Pixels>, cx: &mut Context<Self>) {
         if self.recording_area {
+            return;
+        }
+        if area_move::is_active(cx) {
+            let cursor = self.screen_cursor((f32::from(position.x), f32::from(position.y)));
+            cx.defer(move |cx| {
+                if let Some(gesture) = TargetSelect::global(cx).read(cx).area_move {
+                    area_move::place_area_move(gesture, cursor, cx);
+                }
+            });
             return;
         }
         let Some(drag) = &self.drag else { return };
@@ -2380,13 +2457,31 @@ impl OverlayWindow {
         if self.recording_area {
             return;
         }
+        if area_move::is_active(cx) {
+            let still_down =
+                scap_targets::Display::sample_pointer().is_some_and(|sample| sample.primary_down);
+            if still_down {
+                return;
+            }
+            let cursor = self.screen_cursor((f32::from(position.x), f32::from(position.y)));
+            if let Some(gesture) = TargetSelect::global(cx).read(cx).area_move {
+                cx.defer(move |cx| area_move::place_area_move(gesture, cursor, cx));
+            }
+            area_move::end_area_move(cx);
+            self.drag = None;
+            self.snap_guides.clear();
+            cx.notify();
+            return;
+        }
         self.area_mouse_move(position, cx);
         let Some(drag) = self.drag.take() else {
             return;
         };
         self.snap_guides.clear();
-        if let Some(crop) = self.crop {
-            // A click with no drag is not a selection.
+        let released = self.crop;
+        if let Some(crop) = released {
+            // A click with no drag is not an area selection. Screenshot mode
+            // turns that click, and any other tiny box, into a full-screen shot.
             if crop.width < 2. || crop.height < 2. {
                 self.crop = None;
             } else {
@@ -2394,15 +2489,27 @@ impl OverlayWindow {
             }
         }
         self.sync_area_camera(cx);
-        // Releasing a fresh draw in screenshot mode captures immediately --
-        // the screenshot area picker has no confirm step
+        // Releasing a fresh draw in screenshot mode captures immediately.
+        // The screenshot area picker has no confirm step
         // (`target-select-overlay.tsx`'s area mouse-up). Move/resize grabs
         // keep the crop for the Start button, same as recording mode.
         if matches!(drag, AreaDrag::Draw { .. })
             && self.select.read(cx).recording_mode == Mode::Screenshot
-            && let Some(target) = self.target(cx)
         {
-            cx.defer(move |cx: &mut App| crate::screenshot::take_screenshot(target, cx));
+            let full_display = released.is_none_or(|crop| {
+                screenshot_selection_captures_full_display(crop.width, crop.height)
+            });
+            if full_display {
+                let display_id = self.display_id.clone();
+                cx.defer(move |cx: &mut App| {
+                    crate::screenshot::take_screenshot(
+                        ScreenCaptureTarget::Display { id: display_id },
+                        cx,
+                    );
+                });
+            } else if let Some(target) = self.target(cx) {
+                cx.defer(move |cx: &mut App| crate::screenshot::take_screenshot(target, cx));
+            }
         }
         cx.notify();
     }
@@ -2557,6 +2664,16 @@ mod tests {
             rect(-50., -50., 2000., 2000.).clamped(display),
             rect(0., 0., 1000., 800.)
         );
+    }
+
+    #[test]
+    fn a_click_or_tiny_screenshot_selection_captures_the_full_display() {
+        assert!(screenshot_selection_captures_full_display(0., 0.));
+        assert!(screenshot_selection_captures_full_display(1., 1.));
+        assert!(screenshot_selection_captures_full_display(15., 15.));
+        assert!(!screenshot_selection_captures_full_display(16., 16.));
+        assert!(!screenshot_selection_captures_full_display(15., 200.));
+        assert!(!screenshot_selection_captures_full_display(400., 8.));
     }
 
     /// `MIN_SIZE` is 150x150 for a recording; anything smaller is drawn but

@@ -4,7 +4,9 @@ use x11rb::{
     connection::Connection,
     protocol::{
         randr::ConnectionExt as RandrConnectionExt,
-        xproto::{Atom, AtomEnum, ConnectionExt as XprotoConnectionExt, MapState, Window},
+        xproto::{
+            Atom, AtomEnum, ConnectionExt as XprotoConnectionExt, KeyButMask, MapState, Window,
+        },
     },
     rust_connection::RustConnection,
 };
@@ -477,6 +479,28 @@ fn process_name(pid: u32) -> Option<String> {
         .ok()
         .map(|name| name.trim().to_string())
         .filter(|name| !name.is_empty())
+}
+
+pub fn sample_pointer() -> Option<(LogicalPosition, bool)> {
+    if prefers_wayland() {
+        return None;
+    }
+    let (conn, screen_num) = x11_connection().ok()?;
+    let root = conn.setup().roots[screen_num].root;
+    let reply = conn.query_pointer(root).ok()?.reply().ok()?;
+    let cursor = PhysicalPosition::new(reply.root_x.into(), reply.root_y.into());
+    let display = DisplayImpl::get_containing_cursor()?;
+    let physical = display.physical_bounds()?;
+    let logical = display.logical_bounds()?;
+    let scale_x = physical.size().width() / logical.size().width().max(1.);
+    let scale_y = physical.size().height() / logical.size().height().max(1.);
+    Some((
+        LogicalPosition::new(
+            logical.position().x() + (cursor.x() - physical.position().x()) / scale_x,
+            logical.position().y() + (cursor.y() - physical.position().y()) / scale_y,
+        ),
+        reply.mask.contains(KeyButMask::BUTTON1),
+    ))
 }
 
 fn get_cursor_position() -> Option<PhysicalPosition> {
