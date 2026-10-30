@@ -30,6 +30,8 @@ use tracing::{debug, error, instrument};
 mod lifecycle;
 pub(crate) mod prewarm;
 
+const HIDDEN_WINDOW_SETTLE: Duration = Duration::from_millis(120);
+
 #[derive(tauri_specta::Event, Serialize, Type, Clone)]
 pub struct TargetUnderCursor {
     display_id: Option<DisplayId>,
@@ -133,6 +135,13 @@ pub(crate) async fn open_target_select_overlays_for_session(
         // Capture before the picker is shown, and keep the webviews hidden until
         // that frame is on screen. Otherwise a playing video moves between the
         // picture the user selects and the file that gets saved.
+        let mut hid_visible_window = false;
+        if let Some(main_window) = CapWindowId::Main.get(&app)
+            && main_window.is_visible().unwrap_or(false)
+        {
+            crate::window_transitions::disable(&main_window);
+            hid_visible_window = true;
+        }
         crate::hide_main_window(&app);
         for (id, window) in app.webview_windows() {
             if matches!(
@@ -140,7 +149,9 @@ pub(crate) async fn open_target_select_overlays_for_session(
                 Ok(CapWindowId::TargetSelectOverlay { .. })
             ) && window.is_visible().unwrap_or(false)
             {
+                crate::window_transitions::disable(&window);
                 hide_overlay(&window);
+                hid_visible_window = true;
             }
         }
         let generation = crate::screenshot_freeze::begin(&app);
@@ -154,6 +165,9 @@ pub(crate) async fn open_target_select_overlays_for_session(
         }
         let capture_session = picker_session;
         tokio::spawn(async move {
+            if hid_visible_window {
+                tokio::time::sleep(HIDDEN_WINDOW_SETTLE).await;
+            }
             crate::screenshot_freeze::capture_displays(
                 capture_app,
                 capture_ids,

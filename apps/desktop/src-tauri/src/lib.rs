@@ -64,6 +64,7 @@ mod upload;
 pub mod web_api;
 mod window_exclusion;
 mod window_position_persistence;
+mod window_transitions;
 mod windows;
 
 use audio::AppSounds;

@@ -2145,6 +2145,7 @@ impl ShowCapWindow {
                 }
                 let window = window_builder.build()?;
                 lock_window_text_scale(&window);
+                crate::window_transitions::disable(&window);
                 if !picker.picker_is_current(picker_session) {
                     let _ = window.destroy();
                     return Err(tauri::Error::WindowNotFound);
